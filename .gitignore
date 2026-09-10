@@ -1,0 +1,31 @@
+# ---- 机密与配置 ----
+backend/.env
+
+# ---- 运行时数据 ----
+backend/db.sqlite3
+backend/db.sqlite3-wal
+backend/db.sqlite3-shm
+*.sqlite3
+
+# ---- Python ----
+__pycache__/
+*.py[oc]
+.venv/
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+wheels/
+
+# ---- Node ----
+node_modules/
+
+# ---- 大文件：根目录为字体原始拷贝，运行时使用 resume-studio/fonts/ 内副本 ----
+"OPPO Sans 4.0.ttf"
+OPPO Sans 4.0.ttf
+
+# ---- 编辑器 / 系统 ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

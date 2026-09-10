@@ -1,0 +1,74 @@
+/* ============================================================
+   商务蓝模板（第二套样式）
+   仅当 #resume 根节点带 t2 类时生效，与经典样式(resume.css)完全隔离。
+   像素级复刻：灰底模块标题条（蓝色标签块 + 竖条）、常规字重条目、
+   圆点列表。
+   ============================================================ */
+
+#resume.t2{color:#333;line-height:1.55}
+
+/* 背景色打印保持（Edge/Chrome 部分版本对深层元素继承不稳定，显式声明） */
+#resume.t2 .rs-sec-head,
+#resume.t2 .rs-sec-head .rs-title,
+#resume.t2 .rs-sec-head .rs-rule,
+#resume.t2 .rs-photo{
+  -webkit-print-color-adjust:exact;print-color-adjust:exact;
+}
+
+/* ---- 模块标题：灰底横条 + 蓝色标签块 + 竖条（间距跟随 secGap，自适应收缩联动） ---- */
+#resume.t2 .rs-sec-head{
+  background:#f0f0f0;padding:3px 8px;
+  margin-bottom:calc(var(--rs-sec-gap,10px) * .5 + 4px);
+}
+#resume.t2 .rs-sec-head .rs-ico{display:none}
+#resume.t2 .rs-sec-head .rs-title{
+  flex:0 0 auto;background:var(--rs-accent,#2272b8);color:#fff;
+  font-size:1em;line-height:1.3;padding:3px 12px 4px;letter-spacing:3px;white-space:nowrap;
+}
+#resume.t2 .rs-sec-head .rs-rule{
+  flex:0 0 4px;width:4px;height:1.3em;
+  background:var(--rs-accent,#2272b8);margin-left:3px;
+}
+/* 基本信息标题条：与内容模块同形态，渲染在资料字段上方 */
+#resume.t2 .t2-profile-head{margin:0 0 calc(var(--rs-sec-gap,10px) * .5 + 3px)}
+
+/* ---- 基本信息：两列字段 + 右侧照片 ---- */
+#resume.t2 .rs-profile{margin-bottom:4px}
+#resume.t2 .rs-grid{row-gap:3px;column-gap:14px;padding-top:3px}
+#resume.t2 .rs-grid .cell .lb{color:#333;min-width:4.6em}
+#resume.t2 .rs-photo{width:22mm;height:30mm;border:none;background:#f2f4f6}
+
+/* ---- 条目：日期次要化、标题加重，形成视觉锚点 ---- */
+#resume.t2 .rs-item-line{font-weight:400;gap:10px;margin-bottom:2px}
+#resume.t2 .rs-item-line .d{flex:0 0 26mm;color:#666;font-size:.92em;padding-top:1px}
+#resume.t2 .rs-item-line .t{flex:1;text-align:left;font-weight:600;color:#222}
+#resume.t2 .rs-item-line .r{flex:0 0 auto;color:#555;font-size:.95em}
+#resume.t2 .rs-item-line [contenteditable]:empty{min-width:2em}
+/* 链接：弱化为小号主色，紧贴标题行下方 */
+#resume.t2 .rs-link{font-size:.85em;margin:1px 0 0}
+/* 纯文字条目（技能证书 / 自我评价） */
+#resume.t2 .rs-desc{margin:0}
+
+/* ---- 要点列表：与标题行紧凑衔接，圆点对齐正文 ---- */
+#resume.t2 .rs-bullets{margin:2px 0 0}
+#resume.t2 .rs-bullets li{padding-left:1.1em;margin-bottom:calc(var(--rs-item-gap,7px) * .3)}
+#resume.t2 .rs-bullets li::before{color:#333}
+/* 条目间距完全跟随滑杆，保证自动适配 1 页时能真正收缩到位 */
+#resume.t2 .rs-item{margin-bottom:var(--rs-item-gap,7px)}
+
+/* ---- 打印：背景双保险。Chromium 打印引擎偶发丢弃 background，
+     inset box-shadow 走独立渲染管线可兜底；两层均强制 print-color-adjust ---- */
+@media print{
+  #resume.t2 .rs-sec-head{
+    background:#f0f0f0 !important;
+    box-shadow:inset 0 0 0 99px #f0f0f0;
+    -webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;
+  }
+  #resume.t2 .rs-sec-head .rs-title,
+  #resume.t2 .rs-sec-head .rs-rule{
+    background:var(--rs-accent,#2272b8) !important;
+    box-shadow:inset 0 0 0 99px var(--rs-accent,#2272b8);
+    -webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;
+  }
+  #resume.t2 .rs-sec-head .rs-title{color:#fff !important}
+}

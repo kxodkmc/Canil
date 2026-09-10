@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>管理后台 · Resume Studio</title>
+<style>
+  @font-face { font-family: "OPPO Sans"; src: url("fonts/OPPOSans4.0.ttf") format("truetype"); font-display: swap; }
+  :root { --line: #e2e2dd; --ink: #2b2b28; --sub: #8a8a83; --bg: #f6f5f1; --card: #fffdf9; --accent: #b0543f; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "OPPO Sans", "Microsoft YaHei", "PingFang SC", sans-serif; background: var(--bg); color: var(--ink); }
+  header { display: flex; align-items: center; gap: 12px; padding: 14px 24px; background: var(--card); border-bottom: 1px solid var(--line); }
+  header .brand { font-weight: 700; letter-spacing: 1px; }
+  header .spacer { flex: 1; }
+  main { max-width: 860px; margin: 28px auto; padding: 0 16px; display: grid; gap: 20px; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; }
+  h2 { margin: 0 0 12px; font-size: 16px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  th { color: var(--sub); font-weight: 500; font-size: 13px; }
+  td .sub { color: var(--sub); font-size: 12px; }
+  form { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  input { flex: 1; min-width: 200px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; font: inherit; background: #fff; }
+  button { padding: 8px 14px; border: 1px solid var(--line); border-radius: 6px; background: #fff; font: inherit; cursor: pointer; }
+  button:hover { border-color: var(--accent); color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.primary:hover { opacity: .9; color: #fff; }
+  button.link { border: none; background: none; color: var(--accent); padding: 4px; }
+  .msg { color: var(--accent); font-size: 13px; min-height: 18px; margin: 8px 0; }
+  .card { max-width: 360px; margin: 15vh auto; }
+  .hint { color: var(--sub); font-size: 12px; margin-top: 10px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- 登录门：仅 is_admin 用户可进入（服务端强制校验） -->
+<div id="loginCard" class="card">
+  <section>
+    <h2>管理后台登录</h2>
+    <form id="loginForm">
+      <input type="email" id="loginEmail" placeholder="邮箱" required autocomplete="username">
+      <input type="password" id="loginPass" placeholder="密码" required autocomplete="current-password">
+      <button type="submit" class="primary">登录</button>
+    </form>
+    <div id="loginMsg" class="msg"></div>
+  </section>
+</div>
+
+<div id="panel" hidden>
+  <header>
+    <span class="brand">管理后台</span>
+    <span id="whoami" class="sub"></span>
+    <span class="spacer"></span>
+    <a href="/">返回工作室</a>
+    <button type="button" id="logoutBtn">退出</button>
+  </header>
+  <main>
+    <section>
+      <h2>注册白名单</h2>
+      <form id="allowForm">
+        <input type="email" id="allowEmail" placeholder="允许注册的邮箱" required>
+        <input type="text" id="allowNote" placeholder="备注（可选）" maxlength="255">
+        <button type="submit" class="primary">添加</button>
+      </form>
+      <div id="allowMsg" class="msg"></div>
+      <table>
+        <thead><tr><th>邮箱</th><th>备注</th><th>添加人</th><th>时间</th><th></th></tr></thead>
+        <tbody id="allowBody"></tbody>
+      </table>
+    </section>
+    <section>
+      <h2>用户管理</h2>
+      <div id="userMsg" class="msg"></div>
+      <table>
+        <thead><tr><th>ID</th><th>邮箱</th><th>角色</th><th>状态</th><th>注册时间</th><th></th></tr></thead>
+        <tbody id="userBody"></tbody>
+      </table>
+    </section>
+  </main>
+</div>
+
+<script>window.RS_API_BASE = "";</script>
+<script src="js/rs.js"></script>
+<script src="js/api.js"></script>
+<script>
+"use strict";
+(function () {
+  const $ = RS.util.$, esc = RS.util.esc;
+  const fmt = s => new Date(s).toLocaleString("zh-CN", { hour12: false });
+
+  function showErr(el, err) { el.textContent = err.message || "操作失败"; }
+
+  async function loadAllowlist() {
+    const list = await RS.api.listAllowlist();
+    $("allowBody").innerHTML = list.map(a => `
+      <tr>
+        <td>${esc(a.email)}</td>
+        <td>${esc(a.note) || '<span class="sub">—</span>'}</td>
+        <td>${esc(a.created_by)}</td>
+        <td class="sub">${fmt(a.created_at)}</td>
+        <td><button type="button" class="link" data-del-allow="${esc(a.email)}">移除</button></td>
+      </tr>`).join("");
+  }
+
+  async function loadUsers() {
+    const list = await RS.api.listUsers();
+    $("userBody").innerHTML = list.map(u => `
+      <tr>
+        <td>${u.id}</td>
+        <td>${esc(u.email)}</td>
+        <td>${u.is_admin ? "管理员" : '<span class="sub">普通用户</span>'}</td>
+        <td>${u.is_active ? "正常" : '<span class="sub">已禁用</span>'}</td>
+        <td class="sub">${fmt(u.created_at)}</td>
+        <td><button type="button" class="link" data-del-user="${u.id}" data-del-email="${esc(u.email)}">删除</button></td>
+      </tr>`).join("");
+  }
+
+  async function refresh() { await Promise.all([loadAllowlist(), loadUsers()]); }
+
+  $("allowForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const msg = $("allowMsg");
+    msg.textContent = "";
+    try {
+      await RS.api.addAllowlist($("allowEmail").value.trim(), $("allowNote").value.trim());
+      $("allowEmail").value = ""; $("allowNote").value = "";
+      await loadAllowlist();
+    } catch (err) { showErr(msg, err); }
+  });
+
+  document.addEventListener("click", async e => {
+    const delAllow = e.target.closest("[data-del-allow]");
+    if (delAllow && confirm("移除 " + delAllow.dataset.delAllow + " 的注册许可？")) {
+      try { await RS.api.removeAllowlist(delAllow.dataset.delAllow); await loadAllowlist(); }
+      catch (err) { showErr($("allowMsg"), err); }
+    }
+    const delUser = e.target.closest("[data-del-user]");
+    if (delUser && confirm("删除用户 " + delUser.dataset.delEmail + "？其全部数据将一并删除，且不可恢复。")) {
+      try { await RS.api.deleteUser(delUser.dataset.delUser); await refresh(); }
+      catch (err) { showErr($("userMsg"), err); }
+    }
+  });
+
+  $("loginForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const msg = $("loginMsg");
+    msg.textContent = "";
+    try {
+      const me = await RS.api.login($("loginEmail").value.trim(), $("loginPass").value);
+      if (!me.is_admin) { msg.textContent = "该账号不是管理员"; return; }
+      enter(me);
+    } catch (err) { showErr(msg, err); }
+  });
+
+  $("logoutBtn").addEventListener("click", async () => {
+    try { await RS.api.logout(); } catch (e) { /* 会话已失效也继续退出 */ }
+    $("panel").hidden = true;
+    $("loginCard").hidden = false;
+  });
+
+  function enter(me) {
+    $("whoami").textContent = me.email;
+    $("loginCard").hidden = true;
+    $("panel").hidden = false;
+    refresh().catch(err => showErr($("userMsg"), err));
+  }
+
+  /* 已有会话则直接进入 */
+  RS.api.me()
+    .then(me => { if (me.is_admin) enter(me); else $("loginMsg").textContent = "该账号不是管理员"; })
+    .catch(() => { /* 未登录，显示登录表单 */ });
+})();
+</script>
+</body>
+</html>

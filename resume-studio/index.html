@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>简历工作室 · Resume Studio</title>
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/editor.css">
+<link rel="stylesheet" href="css/resume.css">
+<link rel="stylesheet" href="css/resume-t2.css">
+<link rel="stylesheet" href="css/modal.css">
+<link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+
+<!-- 顶部工具栏 -->
+<header id="toolbar">
+  <span class="brand">简历工作室</span>
+  <select id="versionSelect" title="选择版本"></select>
+  <button class="btn" data-action="save-as" title="把当前内容另存为一个新版本（投不同岗位用）">另存为版本</button>
+  <button class="btn" data-action="rename-version">重命名</button>
+  <button class="btn danger" data-action="delete-version">删除</button>
+  <span class="toolbar-sep"></span>
+  <button class="btn" data-action="toggle-style">排版设置</button>
+  <button class="btn" data-action="toggle-editor" title="收起/展开左侧编辑面板，预览区变全宽">收起面板</button>
+  <button class="btn" data-action="open-apps" title="记录这个简历版本投递过的岗位，便于复盘">投递记录</button>
+  <span class="toolbar-sep"></span>
+  <button class="btn" data-action="export-json" title="导出全部版本为 JSON 备份文件">导出备份</button>
+  <button class="btn" data-action="import-json" title="从 JSON 备份文件恢复 / 合并版本">导入备份</button>
+  <input type="file" id="importFile" accept="application/json,.json" hidden />
+  <span class="toolbar-sep"></span>
+  <button class="btn" data-action="copy-prompt" title="复制标准模板提示词，粘贴给任意 AI 使用">AI 提示词</button>
+  <button class="btn" data-action="import-html" title="导入 AI 按模板生成的 HTML 简历：粘贴文本或选择文件，先校验格式，通过后新建版本，绝不影响当前编辑">AI 导入</button>
+  <input type="file" id="importHTMLFile" accept=".html,.htm,.txt" hidden />
+  <span class="toolbar-spacer"></span>
+  <a id="adminLink" href="/admin.html" target="_blank" class="btn" hidden title="管理注册白名单与用户">管理</a>
+  <button class="btn" id="authBtn">登录 / 注册</button>
+  <span id="pageBadge" class="ok">约 1 页</span>
+  <button class="btn primary" data-action="print">导出 PDF</button>
+</header>
+
+<!-- 排版控制面板 -->
+<div id="stylePanel">
+  <div class="ctl">样式 <select id="stTpl"><option value="classic">经典极简</option><option value="banner">商务蓝</option></select></div>
+  <div class="ctl">字号 <input type="range" id="stFont" min="11.5" max="15" step="0.25"><b id="stFontV"></b></div>
+  <div class="ctl">行距 <input type="range" id="stLine" min="1.25" max="1.8" step="0.05"><b id="stLineV"></b></div>
+  <div class="ctl">模块间距 <input type="range" id="stSec" min="4" max="20" step="1"><b id="stSecV"></b></div>
+  <div class="ctl">条目间距 <input type="range" id="stItem" min="2" max="14" step="1"><b id="stItemV"></b></div>
+  <div class="ctl">页边距 <input type="range" id="stPad" min="7" max="18" step="0.5"><b id="stPadV"></b></div>
+  <div class="ctl">主题色 <input type="color" id="stColor"></div>
+  <div class="ctl"><label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="stAuto" checked title="开启后内容超出 1 页时自动收缩间距/字号/页边距，不足 1 页时回到默认值；手动拖动滑杆会自动关闭此模式"> 自动适配 1 页</label></div>
+  <div class="ctl"><label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="stMarks" checked> 显示页数边界线</label></div>
+</div>
+
+<main id="main">
+  <!-- 左侧：结构化编辑器 -->
+  <aside id="editor"></aside>
+  <div id="resizer" title="拖动调整面板宽度"></div>
+  <!-- 右侧：A4 实时预览 -->
+  <section id="previewWrap">
+    <div id="scalerBox">
+      <div id="page">
+        <div id="resume"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- 投递记录弹层 -->
+<div id="appsMask">
+  <div id="appsPanel">
+    <div class="ap-head">
+      <b>投递记录</b>
+      <span class="hint" style="display:inline;margin:0" id="apSub"></span>
+      <button class="icon-btn" data-action="close-apps" title="关闭" style="font-size:16px">✕</button>
+    </div>
+    <div class="ap-tabs">
+      <button class="ap-tab active" data-action="tab-cur" type="button">本版投递</button>
+      <button class="ap-tab" data-action="tab-all" type="button">全部投递总览</button>
+    </div>
+    <div class="ap-body" id="apBody"></div>
+    <div class="ap-foot">
+      <button class="btn small" data-action="add-app">+ 添加一条投递</button>
+      <span style="margin-left:10px">投递日期点击输入框选择；网址填好后可在条目下方直接点击打开。数据实时同步云端，导出备份时一并带走。</span>
+    </div>
+  </div>
+</div>
+
+<!-- AI HTML 导入弹层（粘贴文本 / 选择文件 两种方式） -->
+<div id="htmlMask">
+  <div id="htmlPanel">
+    <div class="ap-head">
+      <b>AI 导入 · HTML 简历</b>
+      <span class="hint" style="display:inline;margin:0">两种方式任选，导入前先校验格式，通过后新建版本，当前编辑不受影响</span>
+      <button class="icon-btn" data-action="close-html" title="关闭" style="font-size:16px">✕</button>
+    </div>
+    <div class="ap-body">
+      <div class="hint" style="margin-bottom:6px">方式一：直接粘贴 AI 返回的 HTML 全文（含 &lt;resume-data&gt; 根节点）</div>
+      <textarea id="htmlPaste" rows="12" spellcheck="false"
+        placeholder="把 AI 生成的完整 HTML 粘贴到这里&#10;&#10;只认「AI 提示词」按钮生成的模板格式（<resume-data version=&quot;1&quot;>…</resume-data>）"></textarea>
+      <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+        <button class="btn primary" data-action="import-html-paste">导入粘贴内容</button>
+        <span class="hint" style="display:inline;margin:0">方式二：</span>
+        <button class="btn" data-action="import-html-file">选择 .html 文件导入</button>
+      </div>
+      <div id="htmlImportMsg" style="display:none;margin-top:10px;font-size:12px;line-height:1.7;border-radius:6px;padding:8px 10px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 登录/注册遮罩 -->
+<div id="authMask">
+  <div id="authPanel">
+    <div id="authLoading">正在连接…</div>
+    <b id="authTitle">登录</b>
+    <span class="hint">使用管理员允许的邮箱登录，简历数据将保存到云端</span>
+    <form id="authForm">
+      <input type="email" id="authEmail" placeholder="邮箱" required autocomplete="email">
+      <input type="password" id="authPass" placeholder="密码" required minlength="8" autocomplete="current-password">
+      <button type="submit" class="btn primary" id="authSubmit">登录</button>
+      <div id="authMsg" class="auth-msg" hidden></div>
+    </form>
+    <div class="auth-foot">
+      <button type="button" class="link" id="authModeBtn">没有账号？注册</button>
+    </div>
+  </div>
+</div>
+
+<!-- 后端地址：同源部署（后端托管静态文件）时置空；前后端分离开发时填 API 地址 -->
+<script>window.RS_API_BASE = "";</script>
+<!-- 模块加载顺序 = 依赖顺序：命名空间 → 工具 → 数据 → 视图 → 入口 -->
+<script src="js/rs.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/model.js"></script>
+<script src="js/api.js"></script>
+<script src="js/store.js"></script>
+<script src="js/editor.js"></script>
+<script src="js/preview.js"></script>
+<script src="js/stylePanel.js"></script>
+<script src="js/versions.js"></script>
+<script src="js/apps.js"></script>
+<script src="js/io.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/toolbar.js"></script>
+<script src="js/resizer.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

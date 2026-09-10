@@ -1,0 +1,46 @@
+/* 设计变量与基础元素 */
+@font-face{
+  font-family:"OPPO Sans";
+  src:url("../fonts/OPPOSans4.0.ttf") format("truetype");
+  font-display:swap;
+}
+:root{
+  --accent:#2b4c7e;
+  --bg:#edf0f4;
+  --panel:#ffffff;
+  --border:#dde3ea;
+  --text:#1f2937;
+  --muted:#6b7280;
+  --danger:#c0392b;
+  --ok:#1e8e5a;
+  --warn:#d97706;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:"OPPO Sans","Microsoft YaHei","PingFang SC",system-ui,-apple-system,sans-serif;
+  background:var(--bg);color:var(--text);font-size:14px;
+  display:flex;flex-direction:column;height:100vh;overflow:hidden;
+}
+button{font-family:inherit;cursor:pointer}
+input,textarea,select{font-family:inherit;font-size:13px;color:var(--text)}
+
+.btn{
+  border:1px solid var(--border);background:#fff;color:var(--text);
+  border-radius:6px;padding:5px 11px;font-size:13px;line-height:1.4;
+  transition:background .15s,border-color .15s;
+}
+.btn:hover{background:#f3f6fa;border-color:#c4cdd9}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{filter:brightness(1.1)}
+.btn.danger{color:var(--danger)}
+.btn.danger:hover{background:#fdf0ef;border-color:#e5b4ae}
+.btn.small{padding:2px 8px;font-size:12px;border-radius:5px}
+
+.icon-btn{
+  border:none;background:transparent;color:var(--muted);font-size:14px;padding:2px 5px;border-radius:4px;
+}
+.icon-btn:hover{background:#eef2f7;color:var(--text)}
+
+.hint{font-size:11px;color:#9aa5b1;margin:2px 0 6px}

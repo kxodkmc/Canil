@@ -1,0 +1,65 @@
+/* 弹层：投递记录 / AI HTML 导入 */
+#appsMask, #htmlMask{
+  display:none;position:fixed;inset:0;background:rgba(25,35,50,.35);z-index:100;
+}
+#appsMask.open, #htmlMask.open{display:flex;align-items:center;justify-content:center}
+#appsPanel, #htmlPanel{
+  width:560px;max-width:92vw;max-height:80vh;display:flex;flex-direction:column;
+  background:var(--panel);border-radius:10px;box-shadow:0 8px 32px rgba(20,35,60,.25);overflow:hidden;
+}
+#htmlPanel{width:640px}
+#appsPanel .ap-head, #htmlPanel .ap-head{
+  display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border);
+}
+#appsPanel .ap-head b, #htmlPanel .ap-head b{flex:1;font-size:15px;color:var(--accent)}
+#appsPanel .ap-body, #htmlPanel .ap-body{padding:12px 16px;overflow-y:auto}
+#htmlPaste{
+  width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 10px;
+  font-family:Consolas,monospace;font-size:12px;line-height:1.5;resize:vertical;
+}
+#htmlPaste:focus{outline:none;border-color:var(--accent)}
+#htmlImportMsg{white-space:pre-line}
+#htmlImportMsg.err{display:block;background:#fdeceb;color:var(--danger);border:1px solid #e5b4ae}
+#htmlImportMsg.ok{display:block;background:#e5f6ee;color:var(--ok);border:1px solid #b3ddc8}
+#appsPanel .ap-foot{padding:10px 16px;border-top:1px solid var(--border);font-size:11px;color:#9aa5b1}
+.ap-item{
+  border:1px solid var(--border);border-radius:7px;padding:9px 11px;margin-bottom:8px;background:#fcfdff;
+}
+.ap-row{display:flex;gap:6px;margin-bottom:6px;align-items:center}
+.ap-row label{flex:0 0 60px;font-size:12px;color:var(--muted)}
+.ap-row input{flex:1;border:1px solid var(--border);border-radius:6px;padding:5px 7px;min-width:0}
+.ap-row input:focus{outline:none;border-color:var(--accent)}
+.ap-row input.ap-url{font-family:Consolas,monospace;font-size:12px}
+.ap-meta{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-top:2px}
+.ap-meta a{color:var(--accent);text-decoration:none;max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block}
+.ap-meta a:hover{text-decoration:underline}
+.ap-empty{color:#9aa5b1;font-size:13px;text-align:center;padding:22px 0}
+
+/* 投递记录：双 Tab 与全部投递总览 */
+.ap-tabs{display:flex;gap:2px;padding:6px 16px 0;border-bottom:1px solid var(--border)}
+.ap-tab{
+  border:none;background:none;padding:7px 12px;font-size:13px;color:var(--muted);
+  cursor:pointer;border-bottom:2px solid transparent;transition:color .12s;
+}
+.ap-tab:hover{color:var(--text)}
+.ap-tab.active{color:var(--accent);font-weight:600;border-bottom-color:var(--accent)}
+.ap-stat{display:flex;gap:16px;font-size:12px;color:var(--muted);margin-bottom:10px}
+.ap-stat b{color:var(--accent);font-variant-numeric:tabular-nums}
+.ap-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.ap-table th{
+  text-align:left;color:var(--muted);font-weight:500;font-size:12px;
+  padding:4px 6px;border-bottom:1px solid var(--border);white-space:nowrap;
+}
+.ap-table td{padding:6px;border-bottom:1px dashed var(--border);vertical-align:top}
+.ap-table tr:hover td{background:#f7fafd}
+.ap-table .ap-date{white-space:nowrap;color:var(--muted);font-variant-numeric:tabular-nums}
+.ap-table .ap-job{font-weight:600;color:var(--text)}
+.ap-table .ap-note{color:var(--muted);font-size:12px;margin-top:1px}
+.ap-table a{color:var(--accent);text-decoration:none;white-space:nowrap}
+.ap-table a:hover{text-decoration:underline}
+.ap-vid{
+  border:none;background:none;padding:0;font-size:12px;color:var(--accent);
+  cursor:pointer;text-align:left;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.ap-vid:hover{text-decoration:underline}
+.ap-empty-inline{color:#b6bfca}

@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>简历工作室 · Resume Studio</title>
+<style>
+/* ============ 全局与布局 ============ */
+@font-face{
+  font-family:"OPPO Sans";
+  src:url("OPPO Sans 4.0.ttf") format("truetype");
+  font-display:swap;
+}
+:root{
+  --accent:#2b4c7e;
+  --bg:#edf0f4;
+  --panel:#ffffff;
+  --border:#dde3ea;
+  --text:#1f2937;
+  --muted:#6b7280;
+  --danger:#c0392b;
+  --ok:#1e8e5a;
+  --warn:#d97706;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:"OPPO Sans","Microsoft YaHei","PingFang SC",system-ui,-apple-system,sans-serif;
+  background:var(--bg);color:var(--text);font-size:14px;
+  display:flex;flex-direction:column;height:100vh;overflow:hidden;
+}
+button{font-family:inherit;cursor:pointer}
+input,textarea,select{font-family:inherit;font-size:13px;color:var(--text)}
+
+/* ============ 顶部工具栏 ============ */
+#toolbar{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  padding:8px 14px;background:var(--panel);border-bottom:1px solid var(--border);
+  flex:0 0 auto;z-index:10;
+}
+.brand{font-weight:700;font-size:15px;color:var(--accent);margin-right:6px;white-space:nowrap}
+.btn{
+  border:1px solid var(--border);background:#fff;color:var(--text);
+  border-radius:6px;padding:5px 11px;font-size:13px;line-height:1.4;
+  transition:background .15s,border-color .15s;
+}
+.btn:hover{background:#f3f6fa;border-color:#c4cdd9}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{filter:brightness(1.1)}
+.btn.danger{color:var(--danger)}
+.btn.danger:hover{background:#fdf0ef;border-color:#e5b4ae}
+.btn.small{padding:2px 8px;font-size:12px;border-radius:5px}
+#versionSelect{
+  padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:#fff;
+  min-width:170px;max-width:240px;
+}
+.toolbar-sep{width:1px;height:22px;background:var(--border);margin:0 4px}
+.toolbar-spacer{flex:1}
+#pageBadge{
+  font-size:12px;padding:3px 10px;border-radius:999px;font-weight:600;white-space:nowrap;
+}
+#pageBadge.ok{background:#e5f6ee;color:var(--ok)}
+#pageBadge.warn{background:#fdf3e3;color:var(--warn)}
+#pageBadge.bad{background:#fdeceb;color:var(--danger)}
+
+/* ============ 排版控制面板 ============ */
+#stylePanel{
+  display:none;flex:0 0 auto;background:#f8fafc;border-bottom:1px solid var(--border);
+  padding:10px 16px;gap:22px;flex-wrap:wrap;align-items:center;
+}
+#stylePanel.open{display:flex}
+.ctl{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);white-space:nowrap}
+.ctl b{color:var(--text);min-width:42px;text-align:right;font-variant-numeric:tabular-nums}
+.ctl input[type=range]{width:110px;accent-color:var(--accent)}
+.ctl input[type=color]{width:30px;height:24px;border:1px solid var(--border);border-radius:4px;padding:1px;background:#fff}
+
+/* ============ 主区域 ============ */
+#main{flex:1;display:flex;min-height:0}
+
+/* 编辑器与预览之间的拖拽分隔条 */
+#resizer{flex:0 0 5px;cursor:col-resize;background:transparent;transition:background .15s}
+#resizer:hover,#resizer.active{background:#b9cbe4}
+
+/* ---- 左侧编辑器 ---- */
+#editor{
+  width:460px;flex:0 0 460px;overflow-y:auto;background:#f7f9fb;
+  border-right:1px solid var(--border);padding:14px;
+}
+.ed-card{
+  background:var(--panel);border:1px solid var(--border);border-radius:8px;
+  margin-bottom:12px;overflow:hidden;
+}
+.ed-card.drag-over-top{box-shadow:0 -3px 0 0 var(--accent)}
+.ed-card.drag-over-bottom{box-shadow:0 3px 0 0 var(--accent)}
+.ed-card-head{
+  display:flex;align-items:center;gap:8px;padding:9px 11px;background:#fbfcfe;
+  border-bottom:1px solid var(--border);user-select:none;
+}
+.drag-handle{cursor:grab;color:#9aa5b1;font-size:14px;letter-spacing:2px;flex:0 0 auto}
+.drag-handle:active{cursor:grabbing}
+.ed-card-head input.sec-title{
+  flex:1;border:none;background:transparent;font-weight:600;font-size:14px;min-width:0;
+  border-bottom:1px dashed transparent;padding:1px 0;
+}
+.ed-card-head input.sec-title:hover{border-bottom-color:#c4cdd9}
+.ed-card-head input.sec-title:focus{outline:none;border-bottom-color:var(--accent)}
+.icon-btn{
+  border:none;background:transparent;color:var(--muted);font-size:14px;padding:2px 5px;border-radius:4px;
+}
+.icon-btn:hover{background:#eef2f7;color:var(--text)}
+.ed-card-body{padding:11px;display:none}
+.ed-card.expanded .ed-card-body{display:block}
+
+.field-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+.field-row label{flex:0 0 64px;font-size:12px;color:var(--muted)}
+.field-row input,.field-row textarea{
+  flex:1;border:1px solid var(--border);border-radius:6px;padding:6px 8px;min-width:0;
+}
+.field-row input:focus,.field-row textarea:focus{outline:none;border-color:var(--accent)}
+.field-row textarea{resize:vertical;line-height:1.5}
+.kv-row{display:flex;gap:6px;margin-bottom:6px;align-items:center}
+.kv-row input{border:1px solid var(--border);border-radius:6px;padding:5px 7px;min-width:0}
+.kv-row input.kv-label{flex:0 0 84px}
+.kv-row input.kv-value{flex:1}
+
+.ed-item{
+  border:1px solid var(--border);border-radius:7px;margin-bottom:10px;background:#fcfdff;
+}
+.ed-item.drag-over-top{box-shadow:0 -3px 0 0 var(--accent)}
+.ed-item.drag-over-bottom{box-shadow:0 3px 0 0 var(--accent)}
+.ed-item-head{
+  display:flex;align-items:center;gap:6px;padding:6px 9px;border-bottom:1px dashed var(--border);
+  font-size:12px;color:var(--muted);user-select:none;
+}
+.ed-item-head .item-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);font-weight:600}
+.ed-item-body{padding:9px}
+.hint{font-size:11px;color:#9aa5b1;margin:2px 0 6px}
+.add-btn{
+  width:100%;border:1px dashed #c4cdd9;background:transparent;color:var(--muted);
+  border-radius:7px;padding:7px;font-size:13px;
+}
+.add-btn:hover{color:var(--accent);border-color:var(--accent);background:#f5f8fc}
+.ed-footer-tip{font-size:11px;color:#9aa5b1;text-align:center;padding:4px 0 20px;line-height:1.8}
+
+/* ---- 右侧预览 ---- */
+#previewWrap{flex:1;overflow:auto;padding:26px 20px 60px;position:relative}
+#scalerBox{margin:0 auto;position:relative}
+#page{
+  width:210mm;background:#fff;transform-origin:top left;position:relative;
+  box-shadow:0 2px 14px rgba(30,45,70,.16);
+}
+.page-mark{
+  position:absolute;left:0;right:0;border-top:2px dashed #e07856;z-index:5;pointer-events:none;
+}
+.page-mark span{
+  position:absolute;right:6px;top:-20px;font-size:11px;color:#e07856;background:#fff;
+  padding:0 6px;border:1px solid #f0c4b3;border-radius:4px;
+}
+
+/* ============ 简历内容样式（预览与打印共用） ============ */
+#resume{
+  padding:var(--rs-pad,12mm) var(--rs-pad,12mm);
+  font-size:var(--rs-font,13.5px);
+  line-height:var(--rs-lh,1.5);
+  color:#222;
+}
+#resume .rs-accent{color:var(--rs-accent,#2b4c7e)}
+.rs-profile{display:flex;gap:12px;align-items:center;margin-bottom:calc(var(--rs-sec-gap,10px) * .6)}
+.rs-grid{flex:1;display:grid;grid-template-columns:1fr 1fr;row-gap:2px;column-gap:14px;padding-top:2px}
+.rs-grid .cell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rs-grid .cell .lb{color:#555;display:inline-block;min-width:4.2em}
+.rs-photo{
+  flex:0 0 24mm;width:24mm;height:32mm;border:1px solid #cfd6de;background:#f4f6f8;
+  display:flex;align-items:center;justify-content:center;color:#aab3bd;font-size:11px;overflow:hidden;
+}
+.rs-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.rs-sec{margin-top:var(--rs-sec-gap,10px)}
+.rs-sec:first-of-type{margin-top:0}
+.rs-sec-head{display:flex;align-items:center;gap:7px;margin-bottom:calc(var(--rs-item-gap,7px) * .8)}
+.rs-ico{
+  width:1.55em;height:1.55em;border:1.4px solid var(--rs-accent,#2b4c7e);border-radius:50%;
+  display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+}
+.rs-ico svg{width:.95em;height:.95em;fill:var(--rs-accent,#2b4c7e)}
+.rs-title{font-weight:700;font-size:1.14em;color:var(--rs-accent,#2b4c7e);white-space:nowrap}
+.rs-rule{flex:1;height:1px;background:#c9cfd8;margin-left:2px}
+.rs-item{margin-bottom:var(--rs-item-gap,7px)}
+.rs-item:last-child{margin-bottom:0}
+.rs-item-line{display:flex;align-items:baseline;gap:10px;font-weight:700}
+.rs-item-line .d{flex:0 0 auto}
+.rs-item-line .t{flex:1;text-align:left}
+.rs-item-line .r{flex:0 0 auto;text-align:right}
+.rs-desc{margin:1px 0 0;text-align:justify}
+.rs-bullets{list-style:none;margin:1px 0 0}
+.rs-bullets li{position:relative;padding-left:1.05em;text-align:justify}
+.rs-bullets li::before{content:"•";position:absolute;left:0;top:0;color:#333}
+.rs-item-line [contenteditable]:empty{display:inline-block;min-width:2.5em}
+/* 预览区直接编辑（所见即所得）的提示样式 */
+#resume [contenteditable]{cursor:text;border-radius:2px;outline:1px dashed transparent;outline-offset:2px;transition:outline-color .12s}
+#resume [contenteditable]:hover{outline-color:#b9c6d8}
+#resume [contenteditable]:focus{outline:1.5px solid var(--rs-accent,#2b4c7e);background:#f5f9fd}
+.rs-link{color:var(--rs-accent,#2b4c7e);font-size:.95em;margin:0 0 1px;word-break:break-all}
+#resume span[contenteditable]:empty{display:inline-block;min-width:2.5em}
+
+/* ============ 打印：只输出简历，标准 A4 ============ */
+@media print{
+  @page{size:A4;margin:0}
+  body{height:auto;overflow:visible;background:#fff}
+  #toolbar,#stylePanel,#editor,.page-mark,#pageBadge{display:none !important}
+  #main{display:block}
+  #previewWrap{overflow:visible;padding:0}
+  #scalerBox{height:auto !important}
+  #page{transform:none !important;box-shadow:none;width:210mm;margin:0}
+  #resume{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #resume [contenteditable]{outline:none !important;background:none !important}
+}
+/* ============ 投递记录弹层 / AI HTML 导入弹层 ============ */
+#appsMask, #htmlMask{
+  display:none;position:fixed;inset:0;background:rgba(25,35,50,.35);z-index:100;
+}
+#appsMask.open, #htmlMask.open{display:flex;align-items:center;justify-content:center}
+#appsPanel, #htmlPanel{
+  width:560px;max-width:92vw;max-height:80vh;display:flex;flex-direction:column;
+  background:var(--panel);border-radius:10px;box-shadow:0 8px 32px rgba(20,35,60,.25);overflow:hidden;
+}
+#htmlPanel{width:640px}
+#appsPanel .ap-head, #htmlPanel .ap-head{
+  display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border);
+}
+#appsPanel .ap-head b, #htmlPanel .ap-head b{flex:1;font-size:15px;color:var(--accent)}
+#appsPanel .ap-body, #htmlPanel .ap-body{padding:12px 16px;overflow-y:auto}
+#htmlPaste{
+  width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 10px;
+  font-family:Consolas,monospace;font-size:12px;line-height:1.5;resize:vertical;
+}
+#htmlPaste:focus{outline:none;border-color:var(--accent)}
+#htmlImportMsg{white-space:pre-line}
+#htmlImportMsg.err{display:block;background:#fdeceb;color:var(--danger);border:1px solid #e5b4ae}
+#htmlImportMsg.ok{display:block;background:#e5f6ee;color:var(--ok);border:1px solid #b3ddc8}
+#appsPanel .ap-foot{padding:10px 16px;border-top:1px solid var(--border);font-size:11px;color:#9aa5b1}
+.ap-item{
+  border:1px solid var(--border);border-radius:7px;padding:9px 11px;margin-bottom:8px;background:#fcfdff;
+}
+.ap-row{display:flex;gap:6px;margin-bottom:6px;align-items:center}
+.ap-row label{flex:0 0 60px;font-size:12px;color:var(--muted)}
+.ap-row input{flex:1;border:1px solid var(--border);border-radius:6px;padding:5px 7px;min-width:0}
+.ap-row input:focus{outline:none;border-color:var(--accent)}
+.ap-row input.ap-url{font-family:Consolas,monospace;font-size:12px}
+.ap-meta{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-top:2px}
+.ap-meta a{color:var(--accent);text-decoration:none;max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block}
+.ap-meta a:hover{text-decoration:underline}
+.ap-empty{color:#9aa5b1;font-size:13px;text-align:center;padding:22px 0}
+</style>
+</head>
+<body>
+
+<!-- 顶部工具栏 -->
+<header id="toolbar">
+  <span class="brand">简历工作室</span>
+  <select id="versionSelect" title="选择版本"></select>
+  <button class="btn" data-action="save-as" title="把当前内容另存为一个新版本（投不同岗位用）">另存为版本</button>
+  <button class="btn" data-action="rename-version">重命名</button>
+  <button class="btn danger" data-action="delete-version">删除</button>
+  <span class="toolbar-sep"></span>
+  <button class="btn" data-action="toggle-style">排版设置</button>
+  <button class="btn" data-action="toggle-editor" title="收起/展开左侧编辑面板，预览区变全宽">收起面板</button>
+  <button class="btn" data-action="open-apps" title="记录这个简历版本投递过的岗位，便于复盘">投递记录</button>
+  <span class="toolbar-sep"></span>
+  <button class="btn" data-action="export-json" title="导出全部版本为 JSON 备份文件">导出备份</button>
+  <button class="btn" data-action="import-json" title="从 JSON 备份文件恢复 / 合并版本">导入备份</button>
+  <input type="file" id="importFile" accept="application/json,.json" hidden />
+  <span class="toolbar-sep"></span>
+  <button class="btn" data-action="copy-prompt" title="复制标准模板提示词，粘贴给任意 AI 使用">AI 提示词</button>
+  <button class="btn" data-action="import-html" title="导入 AI 按模板生成的 HTML 简历：粘贴文本或选择文件，先校验格式，通过后新建版本，绝不影响当前编辑">AI 导入</button>
+  <input type="file" id="importHTMLFile" accept=".html,.htm,.txt" hidden />
+  <span class="toolbar-spacer"></span>
+  <span id="pageBadge" class="ok">约 1 页</span>
+  <button class="btn primary" data-action="print">导出 PDF</button>
+</header>
+
+<!-- 排版控制面板 -->
+<div id="stylePanel">
+  <div class="ctl">字号 <input type="range" id="stFont" min="11.5" max="15" step="0.25"><b id="stFontV"></b></div>
+  <div class="ctl">行距 <input type="range" id="stLine" min="1.25" max="1.8" step="0.05"><b id="stLineV"></b></div>
+  <div class="ctl">模块间距 <input type="range" id="stSec" min="4" max="20" step="1"><b id="stSecV"></b></div>
+  <div class="ctl">条目间距 <input type="range" id="stItem" min="2" max="14" step="1"><b id="stItemV"></b></div>
+  <div class="ctl">页边距 <input type="range" id="stPad" min="7" max="18" step="0.5"><b id="stPadV"></b></div>
+  <div class="ctl">主题色 <input type="color" id="stColor"></div>
+  <div class="ctl"><label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="stAuto" checked title="开启后内容超出 1 页时自动收缩间距/字号/页边距，不足 1 页时回到默认值；手动拖动滑杆会自动关闭此模式"> 自动适配 1 页</label></div>
+  <div class="ctl"><label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="stMarks" checked> 显示页数边界线</label></div>
+</div>
+
+<main id="main">
+  <!-- 左侧：结构化编辑器 -->
+  <aside id="editor"></aside>
+  <div id="resizer" title="拖动调整面板宽度"></div>
+  <!-- 右侧：A4 实时预览 -->
+  <section id="previewWrap">
+    <div id="scalerBox">
+      <div id="page">
+        <div id="resume"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- 投递记录弹层 -->
+<div id="appsMask">
+  <div id="appsPanel">
+    <div class="ap-head">
+      <b>投递记录</b>
+      <span class="hint" style="display:inline;margin:0">记录「<span id="apVersionName"></span>」投递的岗位</span>
+      <button class="icon-btn" data-action="close-apps" title="关闭" style="font-size:16px">✕</button>
+    </div>
+    <div class="ap-body" id="apBody"></div>
+    <div class="ap-foot">
+      <button class="btn small" data-action="add-app">+ 添加一条投递</button>
+      <span style="margin-left:10px">投递日期可点击输入框选择；网址填好后可在条目下方直接点击打开。数据随版本保存在本机，导出备份时一并带走。</span>
+    </div>
+  </div>
+</div>
+
+<!-- AI HTML 导入弹层（粘贴文本 / 选择文件 两种方式） -->
+<div id="htmlMask">
+  <div id="htmlPanel">
+    <div class="ap-head">
+      <b>AI 导入 · HTML 简历</b>
+      <span class="hint" style="display:inline;margin:0">两种方式任选，导入前先校验格式，通过后新建版本，当前编辑不受影响</span>
+      <button class="icon-btn" data-action="close-html" title="关闭" style="font-size:16px">✕</button>
+    </div>
+    <div class="ap-body">
+      <div class="hint" style="margin-bottom:6px">方式一：直接粘贴 AI 返回的 HTML 全文（含 &lt;resume-data&gt; 根节点）</div>
+      <textarea id="htmlPaste" rows="12" spellcheck="false"
+        placeholder="把 AI 生成的完整 HTML 粘贴到这里&#10;&#10;只认「AI 提示词」按钮生成的模板格式（<resume-data version=&quot;1&quot;>…</resume-data>）"></textarea>
+      <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+        <button class="btn primary" data-action="import-html-paste">导入粘贴内容</button>
+        <span class="hint" style="display:inline;margin:0">方式二：</span>
+        <button class="btn" data-action="import-html-file">选择 .html 文件导入</button>
+      </div>
+      <div id="htmlImportMsg" style="display:none;margin-top:10px;font-size:12px;line-height:1.7;border-radius:6px;padding:8px 10px"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* =====================================================================
+ * 简历工作室 Resume Studio
+ * 单文件、零依赖。数据存 localStorage，可导出 JSON 备份。
+ * 代码分层：
+ *   1) 常量与图标   2) 数据模型/默认数据   3) 状态存取
+ *   4) 编辑器渲染   5) 简历预览渲染       6) 交互与拖拽
+ *   7) 版本管理     8) 导入导出/打印      9) 初始化
+ * ===================================================================== */
+
+/* ---------- 1) 常量与图标 ---------- */
+const LS_KEY = "resume-studio-v1";
+const A4_H_MM = 297;
+const MM_PX = 96 / 25.4;            // 1mm ≈ 3.78px (96dpi)
+const PAGE_H_PX = A4_H_MM * MM_PX;  // A4 高度像素
+
+const ICONS = {
+  info:   '<svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-4 0-7 2-7 4.5V20h14v-1.5C19 16 16 14 12 14Z"/></svg>',
+  edu:    '<svg viewBox="0 0 24 24"><path d="M12 3 1 8l11 5 9-4.1V15h2V8L12 3Zm-6 9.7V17c0 1.7 2.7 3 6 3s6-1.3 6-3v-4.3l-6 2.7-6-2.7Z"/></svg>',
+  skill:  '<svg viewBox="0 0 24 24"><path d="M22.7 19 13.6 9.9a6 6 0 0 0-7.5-7.5l3.8 3.8-2.8 2.8L3.3 5.2a6 6 0 0 0 7.5 7.5l9.1 9.1a1 1 0 0 0 1.4 0l1.4-1.4a1 1 0 0 0 0-1.4Z"/></svg>',
+  work:   '<svg viewBox="0 0 24 24"><path d="M20 6h-4V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2Zm-10-2h4v2h-4V4Z"/></svg>',
+  project:'<svg viewBox="0 0 24 24"><path d="M18 2H8a4 4 0 0 0-4 4v12a4 4 0 0 0 4 4h12V2ZM8 20a2 2 0 0 1 0-4h8v4H8Z"/></svg>',
+  custom: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg>'
+};
+function iconFor(title){
+  if(/教育|学业/.test(title)) return ICONS.edu;
+  if(/技能|证书|语言/.test(title)) return ICONS.skill;
+  if(/实习|工作|经历(?!.*项目)/.test(title) && !/项目/.test(title)) return ICONS.work;
+  if(/项目|作品|科研|竞赛/.test(title)) return ICONS.project;
+  if(/个人信息|求职/.test(title)) return ICONS.info;
+  return ICONS.custom;
+}
+
+/* ---------- 2) 数据模型与默认数据 ---------- */
+const uid = () => "id" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+/* 条目结构：{ id, date(左), title(中), role(右), link(项目链接), desc(段落), bullets:[要点] } */
+const entry = (date, title, role, desc, bullets, link) =>
+  ({ id: uid(), date, title, role, desc, bullets: bullets || [], link: link || "" });
+/* 模块结构：{ id, title, visible, items:[] } */
+const section = (title, items) => ({ id: uid(), title, visible: true, items });
+
+function defaultStyle(){
+  return { font: 13.5, line: 1.5, secGap: 10, itemGap: 7, pad: 12, color: "#2b4c7e", showMarks: true, autoFit: true };
+}
+
+/* —— 空白简历（全新打开时的初始模板；不预置任何个人数据） —— */
+function blankResume(){
+  return {
+    profile: {
+      name: "",
+      photo: null,
+      fields: [
+        { id: uid(), label: "出生年月", value: "" },
+        { id: uid(), label: "电话", value: "" },
+        { id: uid(), label: "邮箱", value: "" },
+        { id: uid(), label: "求职意向", value: "" }
+      ]
+    },
+    sections: [
+      section("教育背景", [entry("", "", "", "", [])]),
+      section("技能与证书", [entry("", "", "", "", [])]),
+      section("实习经历", [entry("", "", "", "", [])]),
+      section("项目经历", [entry("", "", "", "", [])])
+    ]
+  };
+}
+
+/* ---------- 3) 状态存取 ---------- */
+let state = null;   // { versions:{id:{name,data,style}}, order:[id], currentId }
+
+function freshState(){
+  const id = uid();
+  return { versions: { [id]: { name: "我的简历", data: blankResume(), style: defaultStyle() } }, order: [id], currentId: id };
+}
+function loadState(){
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) { const s = JSON.parse(raw); if (s && s.versions && s.currentId) return s; }
+  } catch (e) { console.warn("读取本地数据失败，使用默认数据", e); }
+  return freshState();
+}
+let saveTimer = null;
+function save(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+    catch (e) { alert("保存失败：本地存储空间不足（照片过大？）"); }
+  }, 250);
+}
+const cur = () => state.versions[state.currentId];
+const clone = o => JSON.parse(JSON.stringify(o));
+const esc = s => String(s == null ? "" : s)
+  .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+
+/* ---------- 4) 编辑器渲染 ---------- */
+const editorEl = document.getElementById("editor");
+
+function fieldRow(label, inner){
+  return '<div class="field-row"><label>' + label + '</label>' + inner + '</div>';
+}
+
+function renderEditor(){
+  const v = cur(), d = v.data;
+  let h = "";
+
+  /* —— 个人信息卡片 —— */
+  h += '<div class="ed-card expanded" data-kind="profile">'
+     +   '<div class="ed-card-head"><span style="width:14px"></span>'
+     +     '<span style="flex:1;font-weight:600">个人信息</span></div>'
+     +   '<div class="ed-card-body">'
+     +     fieldRow("姓名", '<input data-scope="profile" data-field="name" value="' + esc(d.profile.name) + '">');
+  d.profile.fields.forEach(f => {
+    h += '<div class="kv-row">'
+      +    '<input class="kv-label" data-scope="pfield" data-fid="' + f.id + '" data-field="label" value="' + esc(f.label) + '" placeholder="标签">'
+      +    '<input class="kv-value" data-scope="pfield" data-fid="' + f.id + '" data-field="value" value="' + esc(f.value) + '" placeholder="内容">'
+      +    '<button class="icon-btn" data-action="del-pfield" data-fid="' + f.id + '" title="删除">✕</button>'
+      +  '</div>';
+  });
+  h +=     '<button class="add-btn" data-action="add-pfield">+ 添加字段（如：民族 / 政治面貌）</button>'
+     +     '<div style="height:8px"></div>'
+     +     fieldRow("照片", '<button class="btn small" data-action="upload-photo">上传照片</button> '
+     +       (d.profile.photo ? '<button class="btn small danger" data-action="del-photo">移除</button>' : '<span class="hint" style="display:inline">未设置</span>'))
+     +   '</div></div>';
+
+  /* —— 各内容模块 —— */
+  d.sections.forEach((sec, si) => {
+    h += '<div class="ed-card' + (sec._open ? " expanded" : "") + '" draggable="true" data-kind="section" data-sid="' + sec.id + '">'
+      +   '<div class="ed-card-head">'
+      +     '<span class="drag-handle" title="拖拽调整模块顺序">⋮⋮</span>'
+      +     '<input class="sec-title" data-scope="section" data-sid="' + sec.id + '" value="' + esc(sec.title) + '">'
+      +     '<button class="icon-btn" data-action="toggle-visible" data-sid="' + sec.id + '" title="显示/隐藏该模块">' + (sec.visible ? "👁" : "—") + '</button>'
+      +     '<button class="icon-btn" data-action="toggle-open" data-sid="' + sec.id + '" title="展开/收起">' + (sec._open ? "▾" : "▸") + '</button>'
+      +     '<button class="icon-btn" data-action="del-section" data-sid="' + sec.id + '" title="删除模块">✕</button>'
+      +   '</div>'
+      +   '<div class="ed-card-body">';
+    sec.items.forEach(it => {
+      const name = it.title || it.role || (it.bullets[0] || "").slice(0, 18) || "（空条目）";
+      h += '<div class="ed-item" draggable="true" data-sid="' + sec.id + '" data-iid="' + it.id + '">'
+        +   '<div class="ed-item-head">'
+        +     '<span class="drag-handle" title="拖拽调整条目顺序">⋮⋮</span>'
+        +     '<span class="item-name">' + esc(name) + '</span>'
+        +     '<button class="icon-btn" data-action="del-item" data-sid="' + sec.id + '" data-iid="' + it.id + '" title="删除条目">✕</button>'
+        +   '</div>'
+        +   '<div class="ed-item-body">'
+        +     fieldRow("时间/左", '<input data-scope="item" data-sid="' + sec.id + '" data-iid="' + it.id + '" data-field="date" value="' + esc(it.date) + '" placeholder="如 2026.07–2026.09">')
+        +     fieldRow("标题/中", '<input data-scope="item" data-sid="' + sec.id + '" data-iid="' + it.id + '" data-field="title" value="' + esc(it.title) + '" placeholder="公司 / 学校 / 项目名">')
+        +     fieldRow("职位/右", '<input data-scope="item" data-sid="' + sec.id + '" data-iid="' + it.id + '" data-field="role" value="' + esc(it.role) + '" placeholder="岗位 / 角色">')
+        +     fieldRow("链接", '<input data-scope="item" data-sid="' + sec.id + '" data-iid="' + it.id + '" data-field="link" value="' + esc(it.link || "") + '" placeholder="项目链接，可留空">')
+        +     fieldRow("描述", '<textarea rows="2" data-scope="item" data-sid="' + sec.id + '" data-iid="' + it.id + '" data-field="desc" placeholder="一段补充说明（可留空）">' + esc(it.desc) + '</textarea>')
+        +     '<div class="hint">要点：每行一条，预览中自动加圆点。直接粘贴 AI 文本即可，永远是纯文本。</div>'
+        +     '<textarea rows="4" data-scope="bullets" data-sid="' + sec.id + '" data-iid="' + it.id + '" placeholder="每行一条要点">' + esc(it.bullets.join("\n")) + '</textarea>'
+        +   '</div>'
+        + '</div>';
+    });
+    h +=    '<button class="add-btn" data-action="add-item" data-sid="' + sec.id + '">+ 添加一条</button>'
+      +  '</div></div>';
+  });
+
+  h += '<button class="add-btn" data-action="add-section">+ 添加新模块（如：荣誉奖项 / 自我评价）</button>'
+    +  '<div class="ed-footer-tip">提示：<b>直接点击右侧简历上的文字即可修改</b>，所见即所得；<br>拖动 ⋮⋮ 手柄调整模块与条目次序；所有修改自动保存在本机浏览器中。</div>';
+
+  editorEl.innerHTML = h;
+}
+
+/* ---------- 5) 简历预览渲染 ---------- */
+const pageEl = document.getElementById("page");
+const resumeEl = document.getElementById("resume");
+const badgeEl = document.getElementById("pageBadge");
+
+function renderPreview(){
+  const v = cur(), d = v.data, st = v.style;
+
+  /* 排版变量 */
+  resumeEl.style.setProperty("--rs-font", st.font + "px");
+  resumeEl.style.setProperty("--rs-lh", st.line);
+  resumeEl.style.setProperty("--rs-sec-gap", st.secGap + "px");
+  resumeEl.style.setProperty("--rs-item-gap", st.itemGap + "px");
+  resumeEl.style.setProperty("--rs-pad", st.pad + "mm");
+  resumeEl.style.setProperty("--rs-accent", st.color);
+
+  /* 个人信息：姓名 + 动态字段，双列网格 + 右侧照片（无照片不占位） */
+  const cells = [{ id: "__name", label: "姓名", value: d.profile.name }].concat(d.profile.fields)
+    .filter(f => (f.value || "").trim() !== "" || f.id === "__name")
+    .map(f => '<div class="cell"><span class="lb">' + esc(f.label) + '：</span>'
+      + '<span contenteditable="true" spellcheck="false" data-pf="' + f.id + '">' + esc(f.value) + '</span></div>')
+    .join("");
+  const photoHtml = d.profile.photo
+    ? '<div class="rs-photo"><img src="' + d.profile.photo + '" alt="证件照"></div>'
+    : "";
+
+  let h = '<div class="rs-profile"><div class="rs-grid">' + cells + '</div>' + photoHtml + '</div>';
+
+  /* 内容模块 */
+  d.sections.filter(s => s.visible).forEach(sec => {
+    h += '<div class="rs-sec"><div class="rs-sec-head">'
+      +    '<span class="rs-ico">' + iconFor(sec.title) + '</span>'
+      +    '<span class="rs-title" contenteditable="true" spellcheck="false" data-stitle="' + sec.id + '">' + esc(sec.title) + '</span><span class="rs-rule"></span>'
+      +  '</div>';
+    sec.items.forEach(it => {
+      h += '<div class="rs-item">';
+      if (it.date || it.title || it.role) {
+        h += '<div class="rs-item-line">'
+          +    '<span class="d" contenteditable="true" spellcheck="false" data-ie="date" data-sid="' + sec.id + '" data-iid="' + it.id + '">' + esc(it.date) + '</span>'
+          +    '<span class="t" contenteditable="true" spellcheck="false" data-ie="title" data-sid="' + sec.id + '" data-iid="' + it.id + '">' + esc(it.title) + '</span>'
+          +    '<span class="r" contenteditable="true" spellcheck="false" data-ie="role" data-sid="' + sec.id + '" data-iid="' + it.id + '">' + esc(it.role) + '</span>'
+          +  '</div>';
+      }
+      if ((it.link || "").trim())
+        h += '<div class="rs-link" contenteditable="true" spellcheck="false" data-ie="link" data-sid="' + sec.id + '" data-iid="' + it.id + '">' + esc(it.link) + '</div>';
+      if ((it.desc || "").trim())
+        h += '<p class="rs-desc" contenteditable="true" spellcheck="false" data-ie="desc" data-sid="' + sec.id + '" data-iid="' + it.id + '">' + esc(it.desc) + '</p>';
+      const bs = it.bullets.map(b => b.trim()).filter(Boolean);
+      if (bs.length) {
+        h += '<ul class="rs-bullets" contenteditable="true" spellcheck="false" data-bul="1" data-sid="' + sec.id + '" data-iid="' + it.id + '">'
+          + bs.map(b => "<li>" + esc(b) + "</li>").join("") + "</ul>";
+      }
+      h += "</div>";
+    });
+    h += "</div>";
+  });
+  resumeEl.innerHTML = h;
+
+  /* 页数边界线（1 页 / 1.5 页） */
+  pageEl.querySelectorAll(".page-mark").forEach(m => m.remove());
+  if (st.showMarks) {
+    [[1, "1 页边界"], [1.5, "1.5 页边界"]].forEach(([n, label]) => {
+      const m = document.createElement("div");
+      m.className = "page-mark";
+      m.style.top = (PAGE_H_PX * n) + "px";
+      m.innerHTML = "<span>" + label + "</span>";
+      pageEl.appendChild(m);
+    });
+  }
+
+  /* 页数徽标 */
+  requestAnimationFrame(updatePageMeta);
+}
+
+/* 页数估算 + 缩放（打字时也可安全调用，不重建 DOM、不丢光标） */
+function updatePageMeta(){
+  const st = cur().style;
+  if (st.autoFit !== false) autoFitLayout();
+  const pages = pageEl.scrollHeight / PAGE_H_PX;
+  badgeEl.textContent = "约 " + (Math.round(pages * 10) / 10) + " 页";
+  badgeEl.className = pages <= 1 ? "ok" : (pages <= 1.5 ? "warn" : "bad");
+  fitPreview();
+}
+
+/* 预览缩放适配面板宽度 */
+const scalerBox = document.getElementById("scalerBox");
+function fitPreview(){
+  const wrap = document.getElementById("previewWrap");
+  const pageW = 210 * MM_PX;
+  const scale = Math.min(1, (wrap.clientWidth - 40) / pageW);
+  pageEl.style.transform = "scale(" + scale + ")";
+  scalerBox.style.width = pageW * scale + "px";
+  scalerBox.style.height = pageEl.offsetHeight * scale + "px";
+}
+
+/* ---------- 自适应排版：内容变化后自动逼近 1 页 ---------- */
+/* 收缩下限与排版面板滑杆下限一致，保证自动结果手动可复现 */
+const FIT_BASE   = { font: 13.5, line: 1.5, secGap: 10, itemGap: 7, pad: 12 };
+const FIT_MIN    = { font: 11.5, line: 1.25, secGap: 4, itemGap: 2, pad: 7 };
+const FIT_STEPS  = [["secGap", 1], ["itemGap", 1], ["line", 0.05], ["font", 0.25], ["pad", 0.5]];
+function applyLayoutVars(s){
+  resumeEl.style.setProperty("--rs-font", s.font + "px");
+  resumeEl.style.setProperty("--rs-lh", s.line);
+  resumeEl.style.setProperty("--rs-sec-gap", s.secGap + "px");
+  resumeEl.style.setProperty("--rs-item-gap", s.itemGap + "px");
+  resumeEl.style.setProperty("--rs-pad", s.pad + "mm");
+}
+function autoFitLayout(){
+  const st = cur().style;
+  const s = Object.assign({}, FIT_BASE);
+  applyLayoutVars(s);
+  const overflow = () => resumeEl.offsetHeight - PAGE_H_PX;
+  if (overflow() <= 0){
+    /* 未超页：回到舒适默认值（避免残留上次收缩值） */
+    if (FIT_STEPS.some(([k]) => st[k] !== s[k])){ Object.assign(st, s); syncStylePanel(); save(); }
+    return;
+  }
+  /* 超页：按视觉影响从小到大逐级收缩，直到回到 1 页或全部触及下限 */
+  let guard = 300;
+  while (overflow() > 0 && guard--){
+    let moved = false;
+    for (const [k, d] of FIT_STEPS){
+      const next = Math.round((s[k] - d) * 100) / 100;
+      if (next >= FIT_MIN[k]){ s[k] = next; applyLayoutVars(s); moved = true; break; }
+    }
+    if (!moved) break;   /* 已到下限仍放不下 = 内容确实超过 1 页，交给页数徽标提示 */
+  }
+  Object.assign(st, s);
+  syncStylePanel();
+}
+
+/* ---------- 6) 交互与拖拽 ---------- */
+function findSec(sid){ return cur().data.sections.find(s => s.id === sid); }
+function findItem(sid, iid){ const s = findSec(sid); return s ? s.items.find(i => i.id === iid) : null; }
+
+/* 输入事件（不重渲染编辑器，避免丢失焦点） */
+editorEl.addEventListener("input", e => {
+  const t = e.target, scope = t.dataset.scope;
+  if (!scope) return;
+  const d = cur().data;
+  if (scope === "profile") d.profile[t.dataset.field] = t.value;
+  else if (scope === "pfield") {
+    const f = d.profile.fields.find(x => x.id === t.dataset.fid);
+    if (f) f[t.dataset.field] = t.value;
+  }
+  else if (scope === "section") { const s = findSec(t.dataset.sid); if (s) s.title = t.value; }
+  else if (scope === "item") { const it = findItem(t.dataset.sid, t.dataset.iid); if (it) it[t.dataset.field] = t.value; }
+  else if (scope === "bullets") {
+    const it = findItem(t.dataset.sid, t.dataset.iid);
+    if (it) it.bullets = t.value.split("\n");
+  }
+  save(); renderPreview();
+});
+
+/* 按钮事件 */
+editorEl.addEventListener("click", e => {
+  const btn = e.target.closest("[data-action]");
+  if (!btn) return;
+  const act = btn.dataset.action, sid = btn.dataset.sid, iid = btn.dataset.iid;
+  const d = cur().data;
+
+  if (act === "add-pfield") d.profile.fields.push({ id: uid(), label: "", value: "" });
+  else if (act === "del-pfield") d.profile.fields = d.profile.fields.filter(f => f.id !== btn.dataset.fid);
+  else if (act === "upload-photo") return pickPhoto();
+  else if (act === "del-photo") d.profile.photo = null;
+  else if (act === "toggle-open") { const s = findSec(sid); s._open = !s._open; }
+  else if (act === "toggle-visible") { const s = findSec(sid); s.visible = !s.visible; }
+  else if (act === "del-section") {
+    if (confirm("删除整个模块「" + (findSec(sid) || {}).title + "」及其全部内容？"))
+      d.sections = d.sections.filter(s => s.id !== sid);
+  }
+  else if (act === "add-item") { findSec(sid).items.push(entry("", "", "", "", [])); findSec(sid)._open = true; }
+  else if (act === "del-item") { const s = findSec(sid); s.items = s.items.filter(i => i.id !== iid); }
+  else if (act === "add-section") {
+    const title = prompt("新模块名称：", "荣誉奖项");
+    if (title) d.sections.push(Object.assign(section(title, [entry("", "", "", "", [])]), { _open: true }));
+  }
+  else return;
+  save(); renderEditor(); renderPreview();
+});
+
+/* 照片上传（base64 存入版本数据，自动压缩到 400px 宽） */
+function pickPhoto(){
+  const inp = document.createElement("input");
+  inp.type = "file"; inp.accept = "image/*";
+  inp.onchange = () => {
+    const file = inp.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, 400 / img.width);
+        const c = document.createElement("canvas");
+        c.width = img.width * scale; c.height = img.height * scale;
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        cur().data.profile.photo = c.toDataURL("image/jpeg", 0.85);
+        save(); renderEditor(); renderPreview();
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  };
+  inp.click();
+}
+
+/* —— 原生 HTML5 拖拽排序（模块与条目通用） —— */
+let dragCtx = null; // {type:'section'|'item', id, sid?}
+
+editorEl.addEventListener("dragstart", e => {
+  const item = e.target.closest(".ed-item");
+  const card = e.target.closest(".ed-card[data-kind=section]");
+  if (item) dragCtx = { type: "item", sid: item.dataset.sid, id: item.dataset.iid };
+  else if (card) dragCtx = { type: "section", id: card.dataset.sid };
+  else return;
+  e.dataTransfer.effectAllowed = "move";
+  try { e.dataTransfer.setData("text/plain", "drag"); } catch (_) {}
+});
+editorEl.addEventListener("dragover", e => {
+  if (!dragCtx) return;
+  const isItem = dragCtx.type === "item";
+  const target = e.target.closest(isItem ? ".ed-item" : ".ed-card[data-kind=section]");
+  if (!target) return;
+  if (isItem && target.dataset.sid !== dragCtx.sid) return; // 条目只允许同模块内排序
+  e.preventDefault();
+  const r = target.getBoundingClientRect();
+  const before = (e.clientY - r.top) < r.height / 2;
+  target.classList.toggle("drag-over-top", before);
+  target.classList.toggle("drag-over-bottom", !before);
+  target._dropBefore = before;
+});
+editorEl.addEventListener("dragleave", e => {
+  const t = e.target.closest(".drag-over-top,.drag-over-bottom");
+  if (t) t.classList.remove("drag-over-top", "drag-over-bottom");
+});
+editorEl.addEventListener("drop", e => {
+  if (!dragCtx) return;
+  const isItem = dragCtx.type === "item";
+  const target = e.target.closest(isItem ? ".ed-item" : ".ed-card[data-kind=section]");
+  e.preventDefault();
+  editorEl.querySelectorAll(".drag-over-top,.drag-over-bottom")
+    .forEach(x => x.classList.remove("drag-over-top", "drag-over-bottom"));
+  if (target) {
+    const arr = isItem ? findSec(dragCtx.sid).items : cur().data.sections;
+    const fromId = dragCtx.id;
+    const toId = isItem ? target.dataset.iid : target.dataset.sid;
+    if (fromId !== toId) {
+      const from = arr.findIndex(x => x.id === fromId);
+      const [moved] = arr.splice(from, 1);
+      let to = arr.findIndex(x => x.id === toId);
+      if (!target._dropBefore) to += 1;
+      arr.splice(to, 0, moved);
+      save(); renderEditor(); renderPreview();
+    }
+  }
+  dragCtx = null;
+});
+editorEl.addEventListener("dragend", () => { dragCtx = null; });
+
+/* —— 6b) 预览区直接编辑（所见即所得） —— */
+function writeBack(t){
+  const d = cur().data;
+  if (t.dataset.pf !== undefined) {
+    if (t.dataset.pf === "__name") d.profile.name = t.textContent;
+    else { const f = d.profile.fields.find(x => x.id === t.dataset.pf); if (f) f.value = t.textContent; }
+  }
+  else if (t.dataset.stitle) { const s = findSec(t.dataset.stitle); if (s && t.textContent.trim()) s.title = t.textContent.trim(); }
+  else if (t.dataset.ie) { const it = findItem(t.dataset.sid, t.dataset.iid); if (it) it[t.dataset.ie] = t.textContent; }
+  else if (t.dataset.bul !== undefined) {
+    const it = findItem(t.dataset.sid, t.dataset.iid);
+    if (it) it.bullets = Array.from(t.querySelectorAll("li")).map(li => li.textContent);
+  }
+}
+let badgeTimer = null;
+resumeEl.addEventListener("input", e => {
+  const t = e.target.closest("[contenteditable]");
+  if (!t) return;
+  writeBack(t); save();
+  clearTimeout(badgeTimer); badgeTimer = setTimeout(updatePageMeta, 250);
+});
+/* 单行字段回车 = 完成（不换行）；要点列表内回车 = 新增一条要点 */
+resumeEl.addEventListener("keydown", e => {
+  if (e.key !== "Enter") return;
+  const t = e.target.closest("[contenteditable]");
+  if (t && t.dataset.bul === undefined) { e.preventDefault(); t.blur(); }
+});
+/* 粘贴一律转为纯文本，外部格式永远进不来 */
+resumeEl.addEventListener("paste", e => {
+  if (!e.target.closest("[contenteditable]")) return;
+  e.preventDefault();
+  const text = (e.clipboardData || window.clipboardData).getData("text/plain");
+  document.execCommand("insertText", false, text);
+});
+
+/* 预览改过后，左侧面板输入框聚焦时自动同步最新值（不整棵重建，不打断操作） */
+editorEl.addEventListener("focusin", e => {
+  const t = e.target, scope = t.dataset.scope;
+  if (!scope) return;
+  const d = cur().data;
+  if (scope === "profile") t.value = d.profile[t.dataset.field] || "";
+  else if (scope === "pfield") { const f = d.profile.fields.find(x => x.id === t.dataset.fid); if (f) t.value = f[t.dataset.field] || ""; }
+  else if (scope === "section") { const s = findSec(t.dataset.sid); if (s) t.value = s.title; }
+  else if (scope === "item") { const it = findItem(t.dataset.sid, t.dataset.iid); if (it) t.value = it[t.dataset.field] || ""; }
+  else if (scope === "bullets") { const it = findItem(t.dataset.sid, t.dataset.iid); if (it) t.value = it.bullets.join("\n"); }
+});
+
+/* ---------- 6c) 投递记录（挂在当前简历版本上，随版本保存/复制/导出） ---------- */
+const appsMask = document.getElementById("appsMask");
+const apBody = document.getElementById("apBody");
+/* 旧版本数据没有 applications 字段，补默认值 */
+function getApps(){
+  const v = cur();
+  if (!Array.isArray(v.applications)) v.applications = [];
+  return v.applications;
+}
+function renderApps(){
+  const apps = getApps();
+  document.getElementById("apVersionName").textContent = cur().name;
+  if (!apps.length){
+    apBody.innerHTML = '<div class="ap-empty">还没有记录。点下方「+ 添加一条投递」，记下岗位名称和招聘页网址，方便之后复盘。</div>';
+    return;
+  }
+  apBody.innerHTML = apps.map(a =>
+    '<div class="ap-item" data-aid="' + a.id + '">'
+    +  '<div class="ap-row"><label>岗位名称</label><input data-field="job" value="' + esc(a.job) + '" placeholder="如：产品运营实习生（某公司）"></div>'
+    +  '<div class="ap-row"><label>网址</label><input class="ap-url" data-field="url" value="' + esc(a.url) + '" placeholder="招聘页链接，可留空"></div>'
+    +  '<div class="ap-row"><label>投递日期</label><input type="date" data-field="date" value="' + esc(a.date || "") + '"></div>'
+    +  '<div class="ap-row"><label>备注</label><input data-field="note" value="' + esc(a.note || "") + '" placeholder="可选：进展 / 内推人 / 渠道等"></div>'
+    +  '<div class="ap-meta">'
+    +    (a.url ? '<a href="' + esc(a.url) + '" target="_blank" rel="noopener">🔗 打开链接</a>' : '<span></span>')
+    +    '<span style="flex:1"></span>'
+    +    '<button class="icon-btn" data-action="del-app" data-aid="' + a.id + '" title="删除这条记录">✕ 删除</button>'
+    +  '</div>'
+    + '</div>').join("");
+}
+function openApps(){ renderApps(); appsMask.classList.add("open"); }
+function closeApps(){ appsMask.classList.remove("open"); }
+appsMask.addEventListener("click", e => {
+  const act = (e.target.closest("[data-action]") || {}).dataset;
+  if (act && act.action === "close-apps") return closeApps();
+  if (act && act.action === "add-app"){
+    getApps().unshift({ id: uid(), job: "", url: "", date: new Date().toISOString().slice(0, 10), note: "" });
+    save(); renderApps(); return;
+  }
+  if (act && act.action === "del-app"){
+    const v = cur();
+    v.applications = v.applications.filter(a => a.id !== act.aid);
+    save(); renderApps(); return;
+  }
+  /* 点击遮罩空白处关闭 */
+  if (e.target === appsMask) closeApps();
+});
+/* 输入即保存（不重建面板，不丢焦点） */
+apBody.addEventListener("input", e => {
+  const inp = e.target.closest("input[data-field]");
+  if (!inp) return;
+  const item = getApps().find(a => a.id === inp.closest(".ap-item").dataset.aid);
+  if (item) item[inp.dataset.field] = inp.value;
+  save();
+});
+
+/* ---------- 7) 版本管理 ---------- */
+const versionSelect = document.getElementById("versionSelect");
+
+function renderVersions(){
+  versionSelect.innerHTML = state.order
+    .map(id => '<option value="' + id + '"' + (id === state.currentId ? " selected" : "") + ">"
+      + esc(state.versions[id].name) + "</option>").join("");
+}
+versionSelect.addEventListener("change", () => {
+  state.currentId = versionSelect.value;
+  save(); renderEditor(); renderPreview(); syncStylePanel();
+});
+
+function versionActions(act){
+  const v = cur();
+  if (act === "save-as") {
+    const name = prompt("新版本名称（建议带岗位方向）：", v.name + " · 副本");
+    if (!name) return;
+    const id = uid();
+    state.versions[id] = { name, data: clone(v.data), style: clone(v.style), applications: clone(v.applications || []) };
+    state.order.push(id);
+    state.currentId = id;
+  }
+  else if (act === "rename-version") {
+    const name = prompt("重命名版本：", v.name);
+    if (name) v.name = name;
+  }
+  else if (act === "delete-version") {
+    if (state.order.length <= 1) return alert("至少保留一个版本。");
+    if (!confirm("删除版本「" + v.name + "」？此操作不可恢复。")) return;
+    delete state.versions[state.currentId];
+    state.order = state.order.filter(id => id !== state.currentId);
+    state.currentId = state.order[0];
+  }
+  save(); renderVersions(); renderEditor(); renderPreview(); syncStylePanel();
+}
+
+/* ---------- 8) 排版面板 / 导入导出 / 打印 ---------- */
+const stylePanel = document.getElementById("stylePanel");
+const sliders = [
+  ["stFont", "font", "stFontV", v => v + "px"],
+  ["stLine", "line", "stLineV", v => v],
+  ["stSec",  "secGap", "stSecV", v => v + "px"],
+  ["stItem", "itemGap", "stItemV", v => v + "px"],
+  ["stPad",  "pad", "stPadV", v => v + "mm"]
+];
+function syncStylePanel(){
+  const st = cur().style;
+  sliders.forEach(([id, key, outId, fmt]) => {
+    document.getElementById(id).value = st[key];
+    document.getElementById(outId).textContent = fmt(st[key]);
+  });
+  document.getElementById("stColor").value = st.color;
+  document.getElementById("stAuto").checked = st.autoFit !== false;
+  document.getElementById("stMarks").checked = st.showMarks;
+}
+sliders.forEach(([id, key, outId, fmt]) => {
+  document.getElementById(id).addEventListener("input", e => {
+    const st = cur().style;
+    if (st.autoFit !== false){ st.autoFit = false; document.getElementById("stAuto").checked = false; } /* 手动微调即退出自动模式 */
+    st[key] = parseFloat(e.target.value);
+    document.getElementById(outId).textContent = fmt(st[key]);
+    save(); renderPreview();
+  });
+});
+document.getElementById("stAuto").addEventListener("change", e => {
+  cur().style.autoFit = e.target.checked; save(); renderPreview();
+});
+document.getElementById("stColor").addEventListener("input", e => {
+  cur().style.color = e.target.value; save(); renderPreview();
+});
+document.getElementById("stMarks").addEventListener("change", e => {
+  cur().style.showMarks = e.target.checked; save(); renderPreview();
+});
+
+/* 工具栏按钮 */
+document.getElementById("toolbar").addEventListener("click", e => {
+  const btn = e.target.closest("[data-action]");
+  if (!btn) return;
+  const act = btn.dataset.action;
+  if (["save-as", "rename-version", "delete-version"].includes(act)) return versionActions(act);
+  if (act === "toggle-style") stylePanel.classList.toggle("open");
+  if (act === "toggle-editor") {
+    const ed = document.getElementById("editor");
+    const hidden = ed.style.display === "none";
+    ed.style.display = hidden ? "" : "none";
+    document.getElementById("resizer").style.display = hidden ? "" : "none";
+    btn.textContent = hidden ? "收起面板" : "展开面板";
+    fitPreview();
+  }
+  if (act === "open-apps") return openApps();
+  if (act === "export-json") exportJSON();
+  if (act === "import-json") document.getElementById("importFile").click();
+  if (act === "copy-prompt") copyPrompt();
+  if (act === "import-html") openHtmlImport();
+  if (act === "print") window.print();
+});
+
+function exportJSON(){
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "简历备份-" + new Date().toISOString().slice(0, 10) + ".json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+document.getElementById("importFile").addEventListener("change", e => {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const s = JSON.parse(reader.result);
+      if (!s.versions || !s.order) throw new Error("bad shape");
+      let n = 0;
+      s.order.forEach(id => {
+        const v = s.versions[id];
+        if (v && v.data && v.data.profile) {
+          const nid = uid();
+          state.versions[nid] = { name: v.name || "导入版本", data: v.data, style: Object.assign(defaultStyle(), v.style), applications: clone(v.applications || []) };
+          state.order.push(nid); n++;
+        }
+      });
+      if (!n) throw new Error("no valid version");
+      state.currentId = state.order[state.order.length - 1];
+      save(); renderVersions(); renderEditor(); renderPreview(); syncStylePanel();
+      alert("成功导入 " + n + " 个版本。");
+    } catch (err) { alert("导入失败：文件不是有效的简历备份。"); }
+  };
+  reader.readAsText(file);
+  e.target.value = "";
+});
+
+/* ---------- 8b) AI 模板提示词 与 HTML 简历导入 ---------- */
+/* 给 AI 的标准提示词：内容写作要求在前（决定质量），模板规范在后（决定格式） */
+const RESUME_PROMPT = `你是一名资深简历编辑，有 10 年帮求职者改简历的经验，熟悉 HR 的真实筛选方式：一份简历平均只被扫 6–10 秒，能留住 HR 的只有事实、数字和与岗位的贴合度。请把【我的简历内容】改写成一份 HR 愿意多看 30 秒的简历，填写进下方的 HTML 数据模板，只输出完整 HTML 代码，不要输出任何解释或 Markdown 代码块标记。
+
+============================================================
+第一部分 内容写作要求（先读这部分，这是质量底线）
+============================================================
+
+一、真实性是底线，禁止编造
+1. 只能使用用户提供的素材。用户没给的公司、项目、数字、奖项、技能，一律不得虚构。
+2. 用户没提供量化数据时，禁止编造精确百分比（如"提升 37%"）。可以写真实的规模、频率、对象、产出物："独立完成部门月度数据报告""覆盖全校 12 个社团""每周产出 3 篇"。
+3. 允许压缩、重组、换表达，但不允许无中生有。面试时编出来的东西一问就穿。
+
+二、要点（bullet）的写法
+1. 每条要点 = 动作动词开头 + 具体做了什么 + 可验证的结果。
+2. 每段经历只保留 2–3 条最能打的要点。把"负责公众号运营，撰写推文"这种岗位说明书式的描述删掉——它只证明你干过，不证明你干得好。
+3. 动词开头，避免每句都以"负责"开头：主导、搭建、协调、优化、独立完成、从零做起，按实际情况选用。
+4. 不要每条要点同构同长。有的要点给数据，有的只给事实，长短错开。也不是每段经历都必须凑满 3 条。
+5. 结果无法量化时写清规模或产出："参与 200 人规模的校园活动统筹，方案被校团委采纳"，比空泛的"取得良好效果"有力得多。
+
+三、贴合目标岗位（用户给了 JD 时必须执行）
+1. 提取 JD 里的关键词和硬性要求（工具、技能、经验年限），简历里使用与 JD 一致的用词。
+2. 把与 JD 最相关的模块和经历排在前面；与岗位无关的内容压缩或删除。
+3. 求职意向字段直接写 JD 对应的岗位名称。
+
+四、禁止事项（这些是一眼假的"AI 味"，HR 看到直接扔）
+1. 禁止空洞自我评价：吃苦耐劳、学习能力强、性格开朗、责任心强、有团队精神。如需自我评价模块，改成 2–3 句可验证的事实：工作年限、核心技能、一件拿得出手的成果。
+2. 禁止升华式结尾："提升了综合能力""积累了宝贵经验""锻炼了沟通协作能力"——直接删。
+3. 禁止浮夸修饰词：极大地、全方位、多维度、深度赋能、闭环、抓手、深耕、生态、同频共振。没有数据支撑的"显著提升"也删掉。
+4. 禁止对称凑数：每段经历恰好 3 条、每条恰好一个百分比、排比句式。真实材料就是不均匀的。
+5. 技能栏写真实程度："熟练使用 Excel（数据透视表、VLOOKUP）"，不写"精通 Office"。
+
+五、正反对照（体会差距，不要照抄措辞）
+差：负责公司公众号运营，撰写文章，提升粉丝量，取得良好效果。
+好：独立运营公司公众号，通过分析阅读数据调整选题，3 个月粉丝从 5000 涨到 1.2 万，平均打开率从 3% 到 8%。
+
+差：本人性格开朗，吃苦耐劳，有较强的沟通能力和团队合作精神。
+好：2 年新媒体运营经验，独立运营账号从 0 做到 10 万粉丝，单篇最高阅读 85 万。
+
+差：参与校园活动，协助老师完成组织工作，锻炼了组织协调能力。
+好：协调 5 个院系社团联动举办打卡活动，活动覆盖 2000 余人，新增报名 327 人。
+
+============================================================
+第二部分 模板规范 resume-data v1（格式要求，严格遵守）
+============================================================
+1. 根节点必须是 <resume-data version="1">，所有内容放在其中。
+2. <profile> 内：必须有且只有一个 <name>姓名</name>；随后是若干个 <field label="标签">内容</field>，常用标签：出生年月、电话、邮箱、求职意向、民族、政治面貌，可按需增删。
+3. 每个大模块是一个 <section title="模块名">，模块顺序即简历中的先后，按与目标岗位的相关性排序；常用模块：教育背景、技能与证书、实习经历、项目经历、荣誉奖项、自我评价。
+4. 模块内每条经历是一个 <item>，属性全部可选：date="时间段" title="公司/学校/项目名称" role="职位/角色" link="项目链接"。
+5. <item> 内：<desc>一段补充说明</desc>（可选，最多一段，如主修课程）；<bullet>一条要点</bullet>（每条 1–2 行，按第一部分要求写）。
+6. 文本中的 & < > 必须转义为 &amp; &lt; &gt;；不要使用模板以外的任何标签或属性。
+7. 内容总量按 1 页 A4 控制，写不下的从最不相关的开始删。
+
+【空白模板示例】
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>简历数据</title></head>
+<body>
+<resume-data version="1">
+  <profile>
+    <name>张三</name>
+    <field label="电话">13800000000</field>
+    <field label="邮箱">example@qq.com</field>
+    <field label="求职意向">目标岗位</field>
+  </profile>
+  <section title="教育背景">
+    <item date="2023.09–2027.06" title="某某大学" role="某某专业（本科）">
+      <desc>主修课程：……</desc>
+    </item>
+  </section>
+  <section title="实习经历">
+    <item date="2026.07–2026.09" title="某公司" role="某岗位实习生">
+      <bullet>动作动词开头 + 具体做了什么 + 可验证的结果</bullet>
+    </item>
+  </section>
+  <section title="项目经历">
+    <item date="2026.05–至今" title="某项目" role="个人项目" link="github.com/xxx">
+      <bullet>……</bullet>
+    </item>
+  </section>
+  <section title="技能与证书">
+    <item>
+      <bullet>熟练使用 Excel（数据透视表、VLOOKUP）……</bullet>
+    </item>
+  </section>
+</resume-data>
+</body>
+</html>
+
+============================================================
+【我的简历内容】
+（在下面粘贴你的简历原文 / 经历素材。有目标岗位 JD 的话务必一并粘贴，并注明哪部分是 JD，AI 会按 JD 针对性排序和用词）`;
+
+function copyPrompt(){
+  const ok = () => alert("提示词已复制！\n\n使用方式：\n1. 粘贴给任意 AI（ChatGPT / Claude / Kimi 等）\n2. 在末尾附上你的简历内容；有目标岗位 JD 务必一并粘贴并注明\n3. 让 AI 输出完整 HTML 代码\n4. 回到这里点「AI 导入」——直接粘贴文本或选择文件均可，会自动校验并新建版本");
+  if (navigator.clipboard && navigator.clipboard.writeText)
+    navigator.clipboard.writeText(RESUME_PROMPT).then(ok, () => fallbackCopy(ok));
+  else fallbackCopy(ok);
+}
+function fallbackCopy(ok){
+  const ta = document.createElement("textarea");
+  ta.value = RESUME_PROMPT;
+  ta.style.cssText = "position:fixed;opacity:0";
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand("copy"); ok(); }
+  catch (e) { alert("复制失败，请检查浏览器权限后重试。"); }
+  document.body.removeChild(ta);
+}
+
+/* 解析并校验 AI 生成的 HTML（resume-data v1）。返回 { errors, warnings, data } */
+function parseResumeHTML(text){
+  const errors = [], warnings = [];
+  const clean = s => (s == null ? "" : String(s)).trim();
+  if (!/<resume-data[\s>]/i.test(text)) {
+    errors.push("未找到 <resume-data> 根节点：这不是按「AI 提示词」模板生成的文件。");
+    return { errors, warnings };
+  }
+  const doc = new DOMParser().parseFromString(text, "text/html");
+  const root = doc.querySelector("resume-data");
+  const kids = el => Array.from(el.children);
+  const is = (el, tag) => el.tagName.toUpperCase() === tag;
+
+  /* 个人信息 */
+  let name = "", photo = null;
+  const fields = [];
+  const profEl = kids(root).find(el => is(el, "PROFILE"));
+  if (!profEl) errors.push("缺少 <profile> 节点。");
+  else {
+    const nameEl = kids(profEl).find(el => is(el, "NAME"));
+    name = clean(nameEl && nameEl.textContent);
+    if (!name) errors.push("缺少姓名：<profile> 内必须有非空的 <name> 节点。");
+    kids(profEl).filter(el => is(el, "FIELD")).forEach((f, i) => {
+      const label = clean(f.getAttribute("label"));
+      if (!label) { errors.push("第 " + (i + 1) + " 个 <field> 缺少 label 属性。"); return; }
+      fields.push({ id: uid(), label, value: clean(f.textContent) });
+    });
+    const photoEl = kids(profEl).find(el => is(el, "PHOTO"));
+    if (photoEl && clean(photoEl.textContent)) {
+      const src = clean(photoEl.textContent);
+      if (/^(https?:\/\/|data:image\/)/i.test(src)) photo = src;
+      else warnings.push("<photo> 不是有效图片地址（http(s):// 或 data:image/），已忽略。");
+    }
+  }
+
+  /* 内容模块 */
+  const secEls = kids(root).filter(el => is(el, "SECTION"));
+  if (!secEls.length) errors.push("未找到任何 <section> 模块节点。");
+  const sections = [];
+  secEls.forEach((sec, si) => {
+    const title = clean(sec.getAttribute("title"));
+    if (!title) { errors.push("第 " + (si + 1) + " 个 <section> 缺少 title 属性（模块名）。"); return; }
+    const items = [];
+    kids(sec).filter(el => is(el, "ITEM")).forEach(it => {
+      const descEl = kids(it).find(el => is(el, "DESC"));
+      const bullets = kids(it).filter(el => is(el, "BULLET")).map(b => clean(b.textContent)).filter(Boolean);
+      const itm = entry(
+        clean(it.getAttribute("date")), clean(it.getAttribute("title")),
+        clean(it.getAttribute("role")), clean(descEl && descEl.textContent),
+        bullets, clean(it.getAttribute("link")));
+      const empty = !itm.date && !itm.title && !itm.role && !itm.desc && !itm.bullets.length && !itm.link;
+      if (empty) warnings.push("模块「" + title + "」中有一条完全空白的 <item>，已跳过。");
+      else items.push(itm);
+    });
+    if (!items.length) warnings.push("模块「" + title + "」没有任何有效 <item>。");
+    sections.push(section(title, items));
+  });
+
+  return { errors, warnings, data: { profile: { name, photo, fields }, sections } };
+}
+
+/* 导入 HTML：校验通过才新建版本并切换；当前编辑的版本已在本地自动保存，绝不被修改 */
+/* 粘贴与文件两种方式共用此函数。返回 true=成功，false=失败（失败信息由 onError 展示） */
+function importHTMLText(text, onError){
+  const r = parseResumeHTML(String(text || ""));
+  if (r.errors.length) {
+    onError("发现 " + r.errors.length + " 处格式错误：\n" +
+      r.errors.slice(0, 8).map((x, i) => (i + 1) + ". " + x).join("\n") +
+      "\n\n当前简历未受任何影响。可把错误信息反馈给 AI，让它修正后重新生成。");
+    return false;
+  }
+  const base = (r.data.profile.name || "未命名") + " · AI 导入";
+  let name = base, n = 2;
+  while (state.order.some(id => state.versions[id].name === name)) name = base + " (" + (n++) + ")";
+  const id = uid();
+  state.versions[id] = { name, data: r.data, style: clone(cur().style) };
+  state.order.push(id);
+  state.currentId = id;
+  save(); renderVersions(); renderEditor(); renderPreview(); syncStylePanel();
+  alert("导入成功！已新建版本「" + name + "」并切换过去，原版本保持不变。" +
+    (r.warnings.length ? "\n\n提醒：\n" + r.warnings.slice(0, 6).map((x, i) => (i + 1) + ". " + x).join("\n") : ""));
+  return true;
+}
+
+/* —— AI 导入弹层：粘贴文本 / 选择文件 —— */
+const htmlMask = document.getElementById("htmlMask");
+const htmlPaste = document.getElementById("htmlPaste");
+const htmlMsg = document.getElementById("htmlImportMsg");
+function openHtmlImport(){
+  htmlMsg.className = ""; htmlMsg.style.display = "none"; htmlMsg.textContent = "";
+  htmlMask.classList.add("open");
+  htmlPaste.focus();
+}
+function closeHtmlImport(){ htmlMask.classList.remove("open"); }
+htmlMask.addEventListener("click", e => {
+  const act = (e.target.closest("[data-action]") || {}).dataset;
+  if (act && act.action === "close-html") return closeHtmlImport();
+  if (act && act.action === "import-html-file") return document.getElementById("importHTMLFile").click();
+  if (act && act.action === "import-html-paste") {
+    const text = htmlPaste.value;
+    if (!text.trim()) {
+      htmlMsg.className = "err";
+      htmlMsg.textContent = "粘贴框是空的：先把 AI 返回的 HTML 全文粘进来，或改用文件导入。";
+      return;
+    }
+    const ok = importHTMLText(text, msg => { htmlMsg.className = "err"; htmlMsg.textContent = msg; });
+    if (ok) { htmlPaste.value = ""; closeHtmlImport(); }
+    return;
+  }
+  /* 点击遮罩空白处关闭 */
+  if (e.target === htmlMask) closeHtmlImport();
+});
+document.getElementById("importHTMLFile").addEventListener("change", e => {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const ok = importHTMLText(String(reader.result || ""),
+      msg => { htmlMsg.className = "err"; htmlMsg.textContent = msg; });
+    if (ok) { htmlPaste.value = ""; closeHtmlImport(); }
+    e.target.value = "";
+  };
+  reader.readAsText(file);
+});
+
+/* 打印前重置缩放，保证 PDF 为真实 A4 尺寸 */
+window.addEventListener("beforeprint", () => { pageEl.style.transform = "none"; });
+window.addEventListener("afterprint", fitPreview);
+window.addEventListener("resize", fitPreview);
+
+/* ---------- 8c) 编辑面板宽度拖拽（记忆宽度） ---------- */
+const LS_UI = "resume-studio-ui-v1";
+(function initResizer(){
+  const resizer = document.getElementById("resizer");
+  try {
+    const ui = JSON.parse(localStorage.getItem(LS_UI) || "{}");
+    if (ui.editorWidth >= 320) {
+      editorEl.style.width = ui.editorWidth + "px";
+      editorEl.style.flex = "0 0 " + ui.editorWidth + "px";
+    }
+  } catch (_) {}
+  resizer.addEventListener("mousedown", e => {
+    e.preventDefault();
+    resizer.classList.add("active");
+    document.body.style.userSelect = "none";
+    const startX = e.clientX, startW = editorEl.offsetWidth;
+    const mv = ev => {
+      const w = Math.min(720, Math.max(320, startW + ev.clientX - startX));
+      editorEl.style.width = w + "px";
+      editorEl.style.flex = "0 0 " + w + "px";
+      fitPreview();
+    };
+    const up = () => {
+      resizer.classList.remove("active");
+      document.body.style.userSelect = "";
+      window.removeEventListener("mousemove", mv);
+      window.removeEventListener("mouseup", up);
+      try { localStorage.setItem(LS_UI, JSON.stringify({ editorWidth: editorEl.offsetWidth })); } catch (_) {}
+      fitPreview();
+    };
+    window.addEventListener("mousemove", mv);
+    window.addEventListener("mouseup", up);
+  });
+})();
+
+/* ---------- 9) 初始化 ---------- */
+state = loadState();
+renderVersions();
+renderEditor();
+renderPreview();
+syncStylePanel();
+</script>
+</body>
+</html>

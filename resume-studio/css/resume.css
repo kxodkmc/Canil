@@ -1,0 +1,58 @@
+/* 简历内容样式（预览与打印共用） */
+#resume{
+  padding:var(--rs-pad,12mm) var(--rs-pad,12mm);
+  font-size:var(--rs-font,13.5px);
+  line-height:var(--rs-lh,1.5);
+  color:#222;
+}
+#resume .rs-accent{color:var(--rs-accent,#2b4c7e)}
+.rs-profile{display:flex;gap:12px;align-items:center;margin-bottom:calc(var(--rs-sec-gap,10px) * .6)}
+.rs-grid{flex:1;display:grid;grid-template-columns:1fr 1fr;row-gap:2px;column-gap:14px;padding-top:2px}
+.rs-grid .cell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rs-grid .cell .lb{color:#555;display:inline-block;min-width:4.2em}
+.rs-photo{
+  flex:0 0 24mm;width:24mm;height:32mm;border:1px solid #cfd6de;background:#f4f6f8;
+  display:flex;align-items:center;justify-content:center;color:#aab3bd;font-size:11px;overflow:hidden;
+}
+.rs-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.rs-sec{margin-top:var(--rs-sec-gap,10px)}
+.rs-sec:first-of-type{margin-top:0}
+.rs-sec-head{display:flex;align-items:center;gap:7px;margin-bottom:calc(var(--rs-item-gap,7px) * .8)}
+.rs-ico{
+  width:1.55em;height:1.55em;border:1.4px solid var(--rs-accent,#2b4c7e);border-radius:50%;
+  display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+}
+.rs-ico svg{width:.95em;height:.95em;fill:var(--rs-accent,#2b4c7e)}
+.rs-title{font-weight:700;font-size:1.14em;color:var(--rs-accent,#2b4c7e);white-space:nowrap}
+.rs-rule{flex:1;height:1px;background:#c9cfd8;margin-left:2px}
+.rs-item{margin-bottom:var(--rs-item-gap,7px)}
+.rs-item:last-child{margin-bottom:0}
+.rs-item-line{display:flex;align-items:baseline;gap:10px;font-weight:700}
+.rs-item-line .d{flex:0 0 auto}
+.rs-item-line .t{flex:1;text-align:left}
+.rs-item-line .r{flex:0 0 auto;text-align:right}
+.rs-desc{margin:1px 0 0;text-align:justify}
+.rs-bullets{list-style:none;margin:1px 0 0}
+.rs-bullets li{position:relative;padding-left:1.05em;text-align:justify}
+.rs-bullets li::before{content:"•";position:absolute;left:0;top:0;color:#333}
+.rs-item-line [contenteditable]:empty{display:inline-block;min-width:2.5em}
+
+/* 预览区直接编辑（所见即所得）的提示样式 */
+#resume [contenteditable]{cursor:text;border-radius:2px;outline:1px dashed transparent;outline-offset:2px;transition:outline-color .12s}
+#resume [contenteditable]:hover{outline-color:#b9c6d8}
+#resume [contenteditable]:focus{outline:1.5px solid var(--rs-accent,#2b4c7e);background:#f5f9fd}
+.rs-link{color:var(--rs-accent,#2b4c7e);font-size:.95em;margin:0 0 1px;word-break:break-all}
+#resume span[contenteditable]:empty{display:inline-block;min-width:2.5em}
+
+/* 打印：只输出简历，标准 A4 */
+@media print{
+  @page{size:A4;margin:0}
+  body{height:auto;overflow:visible;background:#fff}
+  #toolbar,#stylePanel,#editor,.page-mark,#pageBadge{display:none !important}
+  #main{display:block}
+  #previewWrap{overflow:visible;padding:0}
+  #scalerBox{height:auto !important}
+  #page{transform:none !important;box-shadow:none;width:210mm;margin:0}
+  #resume{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #resume [contenteditable]{outline:none !important;background:none !important}
+}

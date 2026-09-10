@@ -1,0 +1,48 @@
+/* 登录/注册遮罩与账号按钮 */
+#authMask {
+  position: fixed; inset: 0; z-index: 300;
+  background: rgba(20, 30, 45, .45);
+  display: none;
+  align-items: center; justify-content: center;
+}
+#authMask.open { display: flex; }
+
+#authPanel {
+  width: 340px; max-width: calc(100vw - 32px);
+  background: #fff; border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .25);
+  padding: 22px 24px 16px;
+}
+
+#authPanel b { font-size: 17px; color: #2b4c7e; }
+#authPanel .hint { display: block; margin: 6px 0 14px; }
+
+#authForm input {
+  width: 100%; box-sizing: border-box;
+  padding: 9px 10px; margin-bottom: 10px;
+  border: 1px solid #d4dbe5; border-radius: 7px;
+  font-size: 13.5px; outline: none;
+}
+#authForm input:focus { border-color: #2b4c7e; }
+
+#authSubmit { width: 100%; margin: 2px 0 4px; }
+
+.auth-msg {
+  margin: 6px 0 2px; padding: 8px 10px;
+  border-radius: 6px; font-size: 12.5px; line-height: 1.6;
+  background: #fdecec; color: #b3392e;
+}
+
+.auth-foot {
+  display: flex; flex-direction: column; gap: 4px;
+  border-top: 1px solid #eef1f5; margin-top: 12px; padding-top: 10px;
+}
+.auth-foot .link {
+  background: none; border: none; padding: 2px 0;
+  color: #5a7db0; font-size: 12.5px; cursor: pointer; text-align: left;
+}
+.auth-foot .link:hover { text-decoration: underline; }
+
+#authLoading { padding: 18px 0; color: #6a7688; font-size: 13px; text-align: center; }
+
+#authBtn { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

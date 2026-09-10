@@ -1,0 +1,144 @@
+/* 左侧结构化编辑器：轻度拟物 —— 纸面卡片 / 内凹输入 / 可按压按钮 */
+.ed-card{
+  position:relative;
+  background:linear-gradient(180deg,#ffffff,#f7f9fc);
+  border:1px solid #d9e1ec;border-radius:10px;
+  box-shadow:0 1px 2px rgba(31,53,88,.08),0 3px 8px rgba(31,53,88,.05),inset 0 1px 0 #fff;
+  margin-bottom:14px;overflow:hidden;
+  transition:box-shadow .18s,border-color .18s,opacity .18s;
+}
+.ed-card:hover{border-color:#c6d2e2;box-shadow:0 2px 4px rgba(31,53,88,.09),0 6px 14px rgba(31,53,88,.07),inset 0 1px 0 #fff}
+.ed-card.expanded{border-color:#b9c9de}
+/* 展开模块：不加左侧色条 */
+
+/* 隐藏模块：置灰但不消失 */
+.ed-card.is-hidden{opacity:.66}
+.ed-card.is-hidden .sec-title{color:#8b97a6}
+
+.ed-card-head{
+  display:flex;align-items:center;gap:8px;padding:10px 12px;
+  background:linear-gradient(180deg,#f0f4f9,#e8edf5);
+  border-bottom:1px solid #dde4ee;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.85);
+  user-select:none;
+}
+.ed-card:not(.expanded) .ed-card-head{background:linear-gradient(180deg,#fbfcfe,#f3f6fa);border-bottom-color:transparent}
+
+.drag-handle{
+  cursor:grab;color:#a8b4c4;font-size:13px;letter-spacing:1px;
+  width:18px;text-align:center;flex:0 0 auto;border-radius:4px;padding:2px 0;
+  text-shadow:0 1px 0 #fff;transition:color .15s,background .15s;
+}
+.drag-handle:hover{color:var(--accent);background:#dfe8f2}
+.drag-handle:active{cursor:grabbing}
+
+.ed-card-head input.sec-title{
+  flex:1;border:none;background:transparent;font-weight:600;font-size:14px;min-width:0;
+  border-bottom:1px dashed transparent;padding:1px 0;
+}
+.ed-card-head input.sec-title:hover{border-bottom-color:#c4cdd9}
+.ed-card-head input.sec-title:focus{outline:none;border-bottom-color:var(--accent)}
+
+/* 折叠箭头：常驻▸，展开时旋转，动效灵动 */
+.fold{display:inline-block;font-size:12px;color:#67788e;transition:transform .18s ease}
+.ed-card.expanded .fold,.ed-item.open .fold{transform:rotate(90deg)}
+
+.ed-card-body{padding:12px;display:none}
+.ed-card.expanded .ed-card-body{display:block;animation:edExpand .18s ease}
+@keyframes edExpand{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+
+/* 小图标按钮：立体可按压 */
+.ed-card .icon-btn,.ed-item .icon-btn{
+  width:24px;height:24px;padding:0;display:inline-flex;align-items:center;justify-content:center;
+  border:1px solid #d5dde8;border-radius:6px;
+  background:linear-gradient(180deg,#ffffff,#f1f5f9);
+  box-shadow:0 1px 1px rgba(31,53,88,.14),inset 0 1px 0 #fff;
+  color:#67788e;font-size:12px;
+  transition:color .12s,border-color .12s,background .12s,box-shadow .12s,transform .06s;
+}
+/* 模块处于"简历中隐藏"状态时，显隐按钮呈红色激活态，与折叠区分 */
+.ed-card.is-hidden [data-action=toggle-visible]{
+  color:var(--danger);border-color:#e5b4ae;
+  background:linear-gradient(180deg,#fff5f4,#fdeceb);
+}
+.ed-card .icon-btn:hover,.ed-item .icon-btn:hover{
+  color:var(--accent);border-color:#b7c6da;background:linear-gradient(180deg,#ffffff,#e9f1f9);
+}
+.ed-card .icon-btn:active,.ed-item .icon-btn:active{
+  transform:translateY(1px);box-shadow:inset 0 1px 2px rgba(31,53,88,.18);
+}
+
+/* 输入框：内凹纸面感 */
+.field-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+.field-row label{flex:0 0 64px;font-size:12px;color:var(--muted)}
+.field-row input,.field-row textarea,
+.kv-row input,
+.ed-item-body > textarea{
+  border:1px solid #d5dde8;border-radius:6px;padding:6px 8px;min-width:0;
+  background:#f8fafc;
+  box-shadow:inset 0 1px 2px rgba(31,53,88,.07);
+  transition:border-color .15s,background .15s,box-shadow .15s;
+}
+.field-row input:focus,.field-row textarea:focus,.kv-row input:focus,
+.ed-item-body > textarea:focus{
+  outline:none;border-color:var(--accent);background:#fff;
+  box-shadow:inset 0 1px 2px rgba(43,76,126,.06),0 0 0 3px rgba(43,76,126,.12);
+}
+/* 文本域：随内容自动增高，去掉原生拉伸把手 */
+.ed-card textarea{
+  font-family:inherit;color:var(--text);
+  resize:none;overflow:hidden;line-height:1.5;
+}
+.ed-item-body > textarea{width:100%;display:block;margin-top:6px}
+.field-row textarea{resize:none}
+.kv-row{display:flex;gap:6px;margin-bottom:6px;align-items:center}
+.kv-row input{padding:5px 7px}
+.kv-row input.kv-label{flex:0 0 84px}
+.kv-row input.kv-value{flex:1}
+
+/* 照片行：与上方添加按钮拉开层次，主操作用主色按钮 */
+.photo-row{
+  margin-top:6px;padding-top:11px;border-top:1px dashed #d5dde8;
+}
+.photo-row .btn.small{flex:0 0 auto;padding:5px 14px;font-size:12px}
+.photo-row .btn.small.primary{box-shadow:0 1px 2px rgba(43,76,126,.3),inset 0 1px 0 rgba(255,255,255,.25)}
+.photo-ok{margin-left:8px;font-size:12px;color:var(--ok)}
+
+/* 条目：卡片内的小卡片 */
+.ed-item{
+  border:1px solid #dde4ee;border-radius:8px;margin-bottom:10px;
+  background:linear-gradient(180deg,#fdfefe,#f8fafd);
+  box-shadow:0 1px 2px rgba(31,53,88,.06),inset 0 1px 0 #fff;
+  transition:box-shadow .15s,border-color .15s;
+}
+.ed-item:hover{border-color:#c9d5e4;box-shadow:0 2px 5px rgba(31,53,88,.09),inset 0 1px 0 #fff}
+.ed-item.drag-over-top{box-shadow:0 -3px 0 0 var(--accent)}
+.ed-item.drag-over-bottom{box-shadow:0 3px 0 0 var(--accent)}
+.ed-card.drag-over-top{box-shadow:0 -3px 0 0 var(--accent)}
+.ed-card.drag-over-bottom{box-shadow:0 3px 0 0 var(--accent)}
+.ed-item-head{
+  display:flex;align-items:center;gap:6px;padding:7px 9px;
+  background:linear-gradient(180deg,#f6f9fc,#eff3f8);
+  border-bottom:1px dashed #d5dde8;
+  font-size:12px;color:var(--muted);user-select:none;cursor:pointer;
+}
+.ed-item.open .ed-item-head{border-bottom-color:#d5dde8}
+.ed-item:not(.open) .ed-item-head{border-bottom-color:transparent}
+.ed-item:not(.open) .item-name{color:#6b7280;font-weight:500}
+.ed-item-head .item-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);font-weight:600}
+.ed-item-body{padding:10px;display:none}
+.ed-item.open .ed-item-body{display:block;animation:edExpand .18s ease}
+
+/* 添加按钮：虚线槽位，悬浮时轻微抬升 */
+.add-btn{
+  width:100%;border:1px dashed #b9c6d8;
+  color:#5c7392;font-size:13px;border-radius:8px;padding:8px;
+  background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(238,243,249,.7));
+  transition:color .15s,border-color .15s,background .15s,box-shadow .15s,transform .06s;
+}
+.add-btn:hover{
+  color:var(--accent);border-color:var(--accent);background:#eef4fb;
+  box-shadow:0 1px 3px rgba(43,76,126,.15);
+}
+.add-btn:active{transform:translateY(1px);box-shadow:none}
+.ed-footer-tip{font-size:11px;color:#9aa5b1;text-align:center;padding:4px 0 20px;line-height:1.8}
