@@ -19,6 +19,7 @@ RS.versions = (function () {
     RS.editor.render();
     RS.preview.render();
     RS.stylePanel.sync();
+    RS.apps.renderStrip();
   }
 
   async function actions(act) {
@@ -51,6 +52,7 @@ RS.versions = (function () {
       RS.editor.render();
       RS.preview.render();
       RS.stylePanel.sync();
+      RS.apps.renderStrip();
     });
   }
 

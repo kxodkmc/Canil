@@ -7,6 +7,7 @@ RS.refreshUI = function () {
   RS.editor.render();
   RS.preview.render();
   RS.stylePanel.sync();
+  if (RS.apps && RS.apps.renderStrip) RS.apps.renderStrip();
 };
 
 (async function boot() {

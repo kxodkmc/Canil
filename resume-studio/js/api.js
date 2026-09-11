@@ -7,12 +7,13 @@ RS.api = (function () {
   const BASE = window.RS_API_BASE || "";
   const PREFIX = "/api/v1";
 
-  async function raw(method, path, body) {
+  async function raw(method, path, body, opts) {
     const res = await fetch(BASE + PREFIX + path, {
       method,
       credentials: "include",
       headers: body !== undefined ? { "Content-Type": "application/json" } : undefined,
-      body: body !== undefined ? JSON.stringify(body) : undefined
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+      keepalive: !!(opts && opts.keepalive)   // 页面关闭/隐藏时兜底发送（body 限制约 64KB）
     });
     if (res.status === 204) return null;
     const data = await res.json().catch(() => null);
@@ -26,13 +27,13 @@ RS.api = (function () {
     return data;
   }
 
-  async function request(method, path, body) {
+  async function request(method, path, body, opts) {
     try {
-      return await raw(method, path, body);
+      return await raw(method, path, body, opts);
     } catch (e) {
       if (e.status !== 401 || path.startsWith("/auth/")) throw e;
       await raw("POST", "/auth/refresh");
-      return raw(method, path, body);
+      return raw(method, path, body, opts);
     }
   }
 
@@ -41,11 +42,11 @@ RS.api = (function () {
     register: (email, password) => raw("POST", "/auth/register", { email, password }),
     logout: () => raw("POST", "/auth/logout"),
     me: () => request("GET", "/me"),
-    putState: state => request("PUT", "/me/state", state),
+    putState: (state, opts) => request("PUT", "/me/state", state, opts),
     listResumes: () => request("GET", "/resumes"),
     createResume: v => request("POST", "/resumes", v),
     getResume: id => request("GET", "/resumes/" + id),
-    updateResume: (id, v) => request("PUT", "/resumes/" + id, v),
+    updateResume: (id, v, opts) => request("PUT", "/resumes/" + id, v, opts),
     deleteResume: id => request("DELETE", "/resumes/" + id),
 
     /* 管理端（仅 is_admin 用户可用，服务端强制校验） */

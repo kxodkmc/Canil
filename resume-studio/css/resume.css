@@ -48,7 +48,7 @@
 @media print{
   @page{size:A4;margin:0}
   body{height:auto;overflow:visible;background:#fff}
-  #toolbar,#stylePanel,#editor,.page-mark,#pageBadge{display:none !important}
+  #toolbar,#stylePanel,#editor,.page-mark,#pageBadge,#appsStrip,#resizer{display:none !important}
   #main{display:block}
   #previewWrap{overflow:visible;padding:0}
   #scalerBox{height:auto !important}

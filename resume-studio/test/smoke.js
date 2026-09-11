@@ -161,26 +161,37 @@ const tick = () => new Promise(r => setTimeout(r, 0));
   d.querySelector('[data-action="open-apps"]').click();
   ok("弹层开启并显示空态", d.getElementById("appsMask").classList.contains("open") && !!d.querySelector(".ap-empty"));
   d.querySelector('[data-action="add-app"]').click();
-  ok("添加一条记录", d.querySelectorAll(".ap-item").length === 1);
+  ok("添加一条记录(卡片)", d.querySelectorAll(".ap-item").length === 1);
   const jobInput = d.querySelector('.ap-item input[data-field="job"]');
   jobInput.value = "产品实习生";
   jobInput.dispatchEvent(new w.Event("input", { bubbles: true }));
   ok("岗位写回", w.RS.store.cur().applications[0].job === "产品实习生");
+  d.querySelector('[data-action="close-apps"]').click();
+  await tick();
+  ok("关闭弹层后速览条出现", d.getElementById("appsStrip").hidden === false);
+  ok("速览条含岗位 chip", d.querySelector("#appsStrip .as-chip").textContent === "产品实习生");
 
-  console.log("== 投递总览 ==");
-  // 给另一个版本预置一条较早的投递，验证跨版本汇总、倒序与跳转
+  console.log("== 投递总览(思维导图画布) ==");
+  // 给另一个版本预置一条较早的投递，验证跨版本汇总、连线与跳转
   const st0 = w.RS.store.get();
   const otherVid = st0.order.find(id => id !== st0.currentId);
   (st0.versions[otherVid].applications = st0.versions[otherVid].applications || [])
     .unshift({ id: "test-ov1", job: "数据工程师", url: "", date: "2026-09-01", note: "" });
   w.RS.store.save();
+  d.querySelector('[data-action="open-apps"]').click();
   d.querySelector('[data-action="tab-all"]').click();
-  ok("总览跨版本汇总 2 条", d.querySelectorAll(".ap-table tbody tr").length === 2);
-  ok("含两个版本的记录", d.querySelector(".ap-table").textContent.includes("产品实习生") && d.querySelector(".ap-table").textContent.includes("数据工程师"));
-  ok("按日期倒序排列", d.querySelector(".ap-table tbody .ap-date").textContent === new Date().toISOString().slice(0, 10));
-  ok("统计行显示总数", d.querySelector(".ap-stat").textContent.includes("共 2 条"));
-  d.querySelector('.ap-vid[data-vid="' + otherVid + '"]').click();
-  ok("点版本名跳转并切回本版视图", w.RS.store.get().currentId === otherVid && !!d.querySelector(".ap-item"));
+  ok("总览 Tab 弹层加宽", d.getElementById("appsPanel").classList.contains("wide"));
+  ok("画布渲染根节点", !!d.querySelector(".map-node.map-root"));
+  ok("画布跨版本汇总 2 个岗位节点", d.querySelectorAll(".map-node.map-job").length === 2);
+  ok("画布渲染 2 个版本节点", d.querySelectorAll(".map-node.map-ver").length === 2);
+  ok("含两个版本的记录", d.getElementById("mapWorld").textContent.includes("产品实习生") && d.getElementById("mapWorld").textContent.includes("数据工程师"));
+  ok("连线：根→岗位 2 条 + 岗位→版本 2 条", d.querySelectorAll(".map-e-root").length === 2 && d.querySelectorAll(".map-e-ver").length === 2);
+  ok("岗位按日期倒序(最新在最上)", d.querySelector(".map-node.map-job .map-job-date").textContent === new Date().toISOString().slice(0, 10));
+  ok("统计行显示总数与版本数", d.querySelector(".ap-stat").textContent.includes("共 2 条") && d.querySelector(".ap-stat").textContent.includes("2 个简历版本"));
+  d.querySelector('.map-ver[data-vid="' + otherVid + '"]').click();
+  await tick();
+  ok("点版本节点跳转并切回本版视图", w.RS.store.get().currentId === otherVid && !!d.querySelector(".ap-item"));
+  ok("速览条随版本切换更新", d.getElementById("appsStrip").textContent.includes("数据工程师"));
 
   console.log("== 排版面板 ==");
   d.querySelector('[data-action="toggle-style"]').click();

@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>简历工作室 · Resume Studio</title>
+<link rel="icon" href="data:,">
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/layout.css">
 <link rel="stylesheet" href="css/editor.css">
@@ -59,6 +60,7 @@
   <div id="resizer" title="拖动调整面板宽度"></div>
   <!-- 右侧：A4 实时预览 -->
   <section id="previewWrap">
+    <div id="appsStrip" hidden></div>
     <div id="scalerBox">
       <div id="page">
         <div id="resume"></div>
@@ -81,8 +83,8 @@
     </div>
     <div class="ap-body" id="apBody"></div>
     <div class="ap-foot">
-      <button class="btn small" data-action="add-app">+ 添加一条投递</button>
-      <span style="margin-left:10px">投递日期点击输入框选择；网址填好后可在条目下方直接点击打开。数据实时同步云端，导出备份时一并带走。</span>
+      <button class="btn primary" data-action="add-app">＋ 添加一条投递</button>
+      <span style="margin-left:10px">输入即自动保存并同步云端；网址填好后可在卡片下方直接点击打开。</span>
     </div>
   </div>
 </div>

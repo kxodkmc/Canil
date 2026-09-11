@@ -39,7 +39,31 @@
   border-right:1px solid var(--border);padding:14px;
 }
 
-#previewWrap{flex:1;overflow:auto;padding:26px 20px 60px;position:relative}
+#previewWrap{flex:1;overflow:auto;padding:16px 20px 60px;position:relative}
+
+/* 本版投递速览条：屏幕可见，打印隐藏（见 resume.css @media print） */
+#appsStrip{
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+  width:fit-content;max-width:100%;margin:0 auto 14px;
+  background:#fff;border:1px solid var(--border);border-radius:999px;
+  padding:5px 8px 5px 14px;box-shadow:0 1px 4px rgba(30,45,70,.08);
+  font-size:12px;color:var(--muted);
+}
+#appsStrip[hidden]{display:none}
+#appsStrip .as-label b{color:var(--accent);font-variant-numeric:tabular-nums}
+.as-chip{
+  border:1px solid #d5e0ef;background:#eef3fa;color:var(--accent);
+  border-radius:999px;padding:2px 10px;font-size:12px;line-height:1.5;
+  max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.as-chip:hover{background:#e2ebf7;border-color:#b9cbe4}
+.as-more{font-size:11px;color:#9aa5b1;padding:0 2px}
+.as-open{
+  border:none;background:transparent;color:var(--accent);font-size:12px;
+  padding:2px 6px;border-radius:999px;white-space:nowrap;
+}
+.as-open:hover{background:#eef3fa}
+
 #scalerBox{margin:0 auto;position:relative}
 #page{
   width:210mm;background:#fff;transform-origin:top left;position:relative;
