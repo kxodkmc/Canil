@@ -54,6 +54,9 @@ RS.api = (function () {
     addAllowlist: (email, note) => request("POST", "/admin/allowlist", { email, note }),
     removeAllowlist: email => request("DELETE", "/admin/allowlist/" + encodeURIComponent(email)),
     listUsers: () => request("GET", "/admin/users"),
-    deleteUser: id => request("DELETE", "/admin/users/" + id)
+    deleteUser: id => request("DELETE", "/admin/users/" + id),
+    exportUser: id => request("GET", "/admin/users/" + id + "/export"),
+    exportUserApplications: (id, company) => request(
+      "GET", "/admin/users/" + id + "/applications" + (company ? "?company=" + encodeURIComponent(company) : ""))
   };
 })();

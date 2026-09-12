@@ -74,9 +74,10 @@
       <h2>用户管理</h2>
       <div id="userMsg" class="msg"></div>
       <table>
-        <thead><tr><th>ID</th><th>邮箱</th><th>角色</th><th>状态</th><th>注册时间</th><th></th></tr></thead>
+        <thead><tr><th>ID</th><th>邮箱</th><th>角色</th><th>状态</th><th>注册时间</th><th>操作</th></tr></thead>
         <tbody id="userBody"></tbody>
       </table>
+      <div class="hint">「导出数据」下载该账号全部数据的 JSON（账号信息 + 全部简历及投递记录）；「投递记录」仅下载该用户跨全部简历版本的投递记录列表。</div>
     </section>
   </main>
 </div>
@@ -113,8 +114,29 @@
         <td>${u.is_admin ? "管理员" : '<span class="sub">普通用户</span>'}</td>
         <td>${u.is_active ? "正常" : '<span class="sub">已禁用</span>'}</td>
         <td class="sub">${fmt(u.created_at)}</td>
-        <td><button type="button" class="link" data-del-user="${u.id}" data-del-email="${esc(u.email)}">删除</button></td>
+        <td>
+          <button type="button" class="link" data-export-user="${u.id}" data-export-email="${esc(u.email)}" title="导出该账号全部数据（JSON）">导出数据</button>
+          <button type="button" class="link" data-export-apps="${u.id}" data-export-email="${esc(u.email)}" title="导出该用户的投递记录列表（JSON）">投递记录</button>
+          <button type="button" class="link" data-del-user="${u.id}" data-del-email="${esc(u.email)}">删除</button>
+        </td>
       </tr>`).join("");
+  }
+
+  /* 下载 JSON 文件 */
+  function downloadJSON(data, filename) {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function stamp() {
+    return new Date().toISOString().slice(0, 10);
   }
 
   async function refresh() { await Promise.all([loadAllowlist(), loadUsers()]); }
@@ -135,6 +157,20 @@
     if (delAllow && confirm("移除 " + delAllow.dataset.delAllow + " 的注册许可？")) {
       try { await RS.api.removeAllowlist(delAllow.dataset.delAllow); await loadAllowlist(); }
       catch (err) { showErr($("allowMsg"), err); }
+    }
+    const exportUser = e.target.closest("[data-export-user]");
+    if (exportUser) {
+      try {
+        const data = await RS.api.exportUser(exportUser.dataset.exportUser);
+        downloadJSON(data, `resume-studio-账号数据-${exportUser.dataset.exportEmail}-${stamp()}.json`);
+      } catch (err) { showErr($("userMsg"), err); }
+    }
+    const exportApps = e.target.closest("[data-export-apps]");
+    if (exportApps) {
+      try {
+        const rows = await RS.api.exportUserApplications(exportApps.dataset.exportApps);
+        downloadJSON(rows, `resume-studio-投递记录-${exportApps.dataset.exportEmail}-${stamp()}.json`);
+      } catch (err) { showErr($("userMsg"), err); }
     }
     const delUser = e.target.closest("[data-del-user]");
     if (delUser && confirm("删除用户 " + delUser.dataset.delEmail + "？其全部数据将一并删除，且不可恢复。")) {

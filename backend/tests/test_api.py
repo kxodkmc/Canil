@@ -4,7 +4,10 @@ RESUME_BODY = {
     "name": "我的简历",
     "data": {"profile": {"name": "张三"}, "sections": []},
     "style": {"font": 13.5, "color": "#2b4c7e"},
-    "applications": [{"id": "a1", "job": "产品实习生", "url": "", "date": "2026-09-10", "note": ""}],
+    "applications": [
+        {"id": "a1", "job": "产品实习生", "company": "字节跳动", "companyUrl": "https://jobs.bytedance.com", "url": "", "date": "2026-09-10", "note": ""},
+        {"id": "a2", "job": "产品助理", "company": "腾讯", "companyUrl": "", "url": "", "date": "2026-09-11", "note": "内推"},
+    ],
 }
 
 
@@ -123,6 +126,46 @@ async def test_admin_self_protection(admin_client):
     r = await admin_client.patch(f"/api/v1/admin/users/{me['id']}", json={"is_active": False})
     assert r.status_code == 400
     assert (await admin_client.delete(f"/api/v1/admin/users/{me['id']}")).status_code == 400
+
+
+async def test_admin_export_user_data(admin_client, user_client):
+    await user_client.post("/api/v1/resumes", json=RESUME_BODY)
+    uid = (await user_client.get("/api/v1/me")).json()["id"]
+
+    r = await admin_client.get(f"/api/v1/admin/users/{uid}/export")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["user"]["email"] == USER_EMAIL
+    assert body["user"]["is_admin"] is False
+    assert "password_hash" not in body["user"]
+    assert len(body["resumes"]) == 1
+    apps = body["resumes"][0]["applications"]
+    assert len(apps) == 2 and apps[0]["company"] == "字节跳动"
+
+    # 普通用户无权访问；不存在的用户 404
+    assert (await user_client.get(f"/api/v1/admin/users/{uid}/export")).status_code == 403
+    assert (await admin_client.get("/api/v1/admin/users/9999/export")).status_code == 404
+
+
+async def test_admin_export_user_applications(admin_client, user_client):
+    await user_client.post("/api/v1/resumes", json=RESUME_BODY)
+    uid = (await user_client.get("/api/v1/me")).json()["id"]
+
+    rows = (await admin_client.get(f"/api/v1/admin/users/{uid}/applications")).json()
+    assert len(rows) == 2
+    # 按日期倒序
+    assert rows[0]["job"] == "产品助理" and rows[0]["company"] == "腾讯"
+    assert rows[0]["resume_name"] == "我的简历"
+    assert rows[1]["company_url"] == "https://jobs.bytedance.com"
+
+    # 公司名筛选（包含匹配）
+    rows = (await admin_client.get(f"/api/v1/admin/users/{uid}/applications?company=字节")).json()
+    assert len(rows) == 1 and rows[0]["job"] == "产品实习生"
+    rows = (await admin_client.get(f"/api/v1/admin/users/{uid}/applications?company=不存在")).json()
+    assert rows == []
+
+    assert (await user_client.get(f"/api/v1/admin/users/{uid}/applications")).status_code == 403
+    assert (await admin_client.get("/api/v1/admin/users/9999/applications")).status_code == 404
 
 
 async def test_remove_from_allowlist_deactivates(admin_client, user_client):

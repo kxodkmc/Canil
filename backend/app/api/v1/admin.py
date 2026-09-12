@@ -36,3 +36,15 @@ async def patch_user(user_id: int, body: UserPatch, actor: User = Depends(get_cu
 @router.delete("/users/{user_id}", status_code=204)
 async def delete_user(user_id: int, actor: User = Depends(get_current_admin)):
     await admin_service.delete_user(actor, user_id)
+
+
+@router.get("/users/{user_id}/export")
+async def export_user(user_id: int):
+    """导出指定账号的全部数据（JSON）：账号信息 + 全部简历（含投递记录）。"""
+    return await admin_service.export_user(user_id)
+
+
+@router.get("/users/{user_id}/applications")
+async def export_user_applications(user_id: int, company: str | None = None):
+    """导出某个人跨全部简历版本的投递记录列表，可按公司名筛选。"""
+    return await admin_service.export_user_applications(user_id, company)

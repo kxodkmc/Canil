@@ -70,8 +70,15 @@
 }
 .ap-tab:hover{color:var(--text)}
 .ap-tab.active{color:var(--accent);font-weight:600;border-bottom-color:var(--accent)}
+#apCompanyFilter{
+  margin-left:auto;align-self:center;width:190px;margin-top:2px;
+  padding:5px 10px;font-size:12px;color:var(--text);
+  border:1px solid var(--border);border-radius:6px;background:#fff;
+}
+#apCompanyFilter:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(43,76,126,.10)}
 .ap-stat{display:flex;gap:16px;font-size:12px;color:var(--muted);margin-bottom:10px;flex-wrap:wrap}
 .ap-stat b{color:var(--accent);font-variant-numeric:tabular-nums}
+.ap-filter-on{color:var(--accent)}
 .ap-empty-inline{color:#b6bfca}
 
 /* 全部投递总览：思维导图画布 */
@@ -109,6 +116,10 @@
 .map-job-date{font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums;margin-bottom:2px}
 .map-job-name{font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px}
 .map-job-link{text-decoration:none;font-size:12px}
+.map-job-co{font-size:11px;color:#7b8ba0;margin-top:1px;display:flex;align-items:center;gap:4px}
+.map-job-co a{color:#7b8ba0;text-decoration:none}
+.map-job-co a:hover{color:var(--accent);text-decoration:underline}
+.map-job-co span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .map-job-note{
   font-size:11px;color:var(--muted);margin-top:3px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
