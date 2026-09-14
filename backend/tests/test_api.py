@@ -74,9 +74,20 @@ async def test_resume_crud_and_revision(user_client):
     updated = (await user_client.put(f"/api/v1/resumes/{rid}", json=body)).json()
     assert updated["revision"] == 2 and updated["name"] == "v2"
 
+    # 投递记录增删后随 PUT 持久化（update 曾漏掉 applications 字段导致丢失）
+    body2 = {
+        **RESUME_BODY,
+        "revision": 2,
+        "applications": [{"id": "a3", "job": "数据工程师", "company": "美团", "companyUrl": "", "url": "", "date": "2026-09-12", "note": ""}],
+    }
+    updated2 = (await user_client.put(f"/api/v1/resumes/{rid}", json=body2)).json()
+    assert [a["id"] for a in updated2["applications"]] == ["a3"]
+    reread = (await user_client.get(f"/api/v1/resumes/{rid}")).json()
+    assert reread["applications"][0]["job"] == "数据工程师"
+
     stale = await user_client.put(f"/api/v1/resumes/{rid}", json=body)
     assert stale.status_code == 409
-    assert stale.json()["detail"]["revision"] == 2
+    assert stale.json()["detail"]["revision"] == 3
 
     summaries = (await user_client.get("/api/v1/resumes")).json()
     assert len(summaries) == 1 and summaries[0]["id"] == rid

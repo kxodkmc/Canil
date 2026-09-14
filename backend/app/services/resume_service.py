@@ -26,6 +26,7 @@ async def update(user: User, resume_id: int, payload: ResumeUpdate) -> Resume:
         name=payload.name,
         data=payload.data,
         style=payload.style,
+        applications=payload.applications,
         revision=payload.revision + 1,
         updated_at=datetime.now(timezone.utc),
     )
