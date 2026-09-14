@@ -37,10 +37,26 @@ input,textarea,select{font-family:inherit;font-size:13px;color:var(--text)}
 .btn.danger{color:var(--danger)}
 .btn.danger:hover{background:#fdf0ef;border-color:#e5b4ae}
 .btn.small{padding:2px 8px;font-size:12px;border-radius:5px}
+/* 「保存更改到云端」：有未保存更改时高亮提醒，点击后恢复常态 */
+.btn.dirty{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.dirty:hover{filter:brightness(1.08)}
 
 .icon-btn{
   border:none;background:transparent;color:var(--muted);font-size:14px;padding:2px 5px;border-radius:4px;
 }
 .icon-btn:hover{background:#eef2f7;color:var(--text)}
+
+/* 选中文本快捷菜单（预览区滑选文字时浮现） */
+#selMenu{
+  position:fixed;z-index:1200;display:none;align-items:center;gap:2px;
+  background:#fff;border:1px solid var(--border);border-radius:7px;padding:3px;
+  box-shadow:0 6px 20px rgba(15,35,60,.18);
+}
+#selMenu.open{display:flex}
+#selMenu button{
+  border:none;background:transparent;cursor:pointer;border-radius:5px;
+  width:28px;height:26px;font-size:13.5px;line-height:1;color:var(--text);
+}
+#selMenu button:hover{background:#eef2f7}
 
 .hint{font-size:11px;color:#9aa5b1;margin:2px 0 6px}

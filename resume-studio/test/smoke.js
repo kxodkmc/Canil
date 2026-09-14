@@ -113,6 +113,7 @@ const tick = () => new Promise(r => setTimeout(r, 0));
   nameInput.value = "张三";
   nameInput.dispatchEvent(new w.Event("input", { bubbles: true }));
   ok("姓名写回数据", w.RS.store.cur().data.profile.name === "张三");
+  await new Promise(r => setTimeout(r, 200));   // 预览重绘 150ms 防抖
   ok("预览同步姓名", d.querySelector('[data-pf="__name"]').textContent === "张三");
 
   const firstBullet = d.querySelector('textarea[data-scope="bullets"]');
@@ -129,6 +130,21 @@ const tick = () => new Promise(r => setTimeout(r, 0));
   titleEl.textContent = "教育经历改";
   titleEl.dispatchEvent(new w.Event("input", { bubbles: true }));
   ok("模块标题写回", w.RS.store.cur().data.sections[0].title === "教育经历改");
+
+  console.log("== 预览富文本(滑选加粗) ==");
+  ok("快捷菜单已创建", !!d.getElementById("selMenu"));
+  const bulEl = d.querySelector("#resume .rs-bullets");
+  const li0 = bulEl.querySelector("li");
+  li0.innerHTML = "前半<b>加粗词</b>后半";
+  bulEl.dispatchEvent(new w.Event("input", { bubbles: true }));
+  ok("加粗写回为白名单标签", w.RS.store.cur().data.sections[0].items[0].bullets[0] === "前半<b>加粗词</b>后半");
+  li0.innerHTML = '纯文本<i>斜体</i><span onclick="alert(1)">危险</span><script>bad()</script>';
+  bulEl.dispatchEvent(new w.Event("input", { bubbles: true }));
+  ok("非白名单标签被清洗", w.RS.store.cur().data.sections[0].items[0].bullets[0] === "纯文本<i>斜体</i>危险bad()");
+  li0.innerHTML = "前半<b>加粗词</b>后半";
+  bulEl.dispatchEvent(new w.Event("input", { bubbles: true }));
+  w.RS.preview.render();
+  ok("重渲染后加粗可见", !!d.querySelector("#resume .rs-bullets li b"));
 
   console.log("== 版本操作 ==");
   await w.RS.versions.actions("save-as");
@@ -219,11 +235,16 @@ const tick = () => new Promise(r => setTimeout(r, 0));
   d.querySelector('[data-action="toggle-editor"]').click();
   ok("编辑面板可展开", d.getElementById("editor").style.display === "");
 
-  console.log("== 云端同步 ==");
+  console.log("== 云端同步（仅手动） ==");
   await new Promise(r => setTimeout(r, 400));
   ok("未写任何本地存储", w.localStorage.getItem("resume-studio-v1") === null);
+  ok("手动保存前 UI 状态未同步", (cloud.db.user.ui_state.order || []).length === 1);
+  ok("保存按钮呈未保存高亮态", d.getElementById("saveCloudBtn").classList.contains("dirty"));
+  d.querySelector('[data-action="save-cloud"]').click();
+  await w.RS.store.flush();
   ok("3 个版本均已同步云端且版本号递增", cloud.db.resumes.length === 3 && cloud.db.resumes.every(r => r.revision >= 1));
   ok("云端 UI 状态已保存", cloud.db.user.ui_state.order.length === 3);
+  ok("保存后按钮恢复常态", !d.getElementById("saveCloudBtn").classList.contains("dirty"));
   console.log("\n结果: " + passed + " 通过, " + failed + " 失败");
   finish(failed ? 1 : 0);
 })().catch(e => { console.error("加载失败:", e); process.exit(1); });

@@ -2,14 +2,14 @@
 window.RS = window.RS || {};
 
 /* 状态存取：唯一持有 state 的模块，数据只存云端。
-   登录后：版本与服务端一一对应（id = "r" + 服务端 id），变更防抖同步；
+   登录后：版本与服务端一一对应（id = "r" + 服务端 id），所有同步必须由用户
+   点击「保存更改到云端」手动触发（save 仅标脏，flush 才推送）；
    未登录：仅持有内存空状态供遮罩下的 UI 渲染，不落任何本地存储。 */
 RS.store = (function () {
   let state = null;
   let user = null;
   let revs = {};       // 版本 id -> 服务端 revision（乐观锁）
-  let saveTimer = null;
-  let dirty = new Set();   // 待同步云端的版本 id（编辑时标记，推送成功后摘除）
+  let dirty = new Set();   // 待同步云端的版本 id（编辑时标记，手动保存成功后摘除）
   let pushing = null;      // 进行中的推送 Promise：所有推送严格串行，杜绝并发 409
 
   async function init() {
@@ -28,15 +28,14 @@ RS.store = (function () {
   }
 
   function leaveCloud() {
-    clearTimeout(saveTimer); saveTimer = null;
     dirty.clear();
+    markDirtyUI();
     user = null;
     revs = {};
     state = RS.model.freshState();
   }
 
   async function pullCloud() {
-    clearTimeout(saveTimer); saveTimer = null;
     dirty.clear();
     const list = await RS.api.listResumes();
     const versions = {};
@@ -93,19 +92,29 @@ RS.store = (function () {
     if (state.currentId === id) state.currentId = state.order[0];
   }
 
-  /* 任何本地变更都经 save()：标记当前版本为脏，250ms 防抖后串行推送 */
+  /* 任何本地变更都经 save()：仅标记当前版本为脏（内存态），绝不自动推送。
+     同步云端必须由用户点击工具栏「保存更改到云端」触发 flush()。 */
   function save() {
     if (state && state.currentId) dirty.add(state.currentId);
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(flush, 250);
+    markDirtyUI();
   }
 
-  /* 立即推送（关闭弹层/切版本/页面隐藏前调用，跳过防抖）。
-     失败的版本进入 failed 隔离，本轮不再重试；剩余脏数据按指数退避接力推送，避免死循环。 */
-  let failStreak = 0;
-  function flush() {
-    clearTimeout(saveTimer); saveTimer = null;
-    if (pushing) return pushing;                 // 串行：在途推送未结束时只登记脏标记
+  /* 未保存版本数（供 UI 提示） */
+  function dirtyCount() { return dirty.size; }
+
+  /* 保存按钮状态：有未保存更改时高亮提示 */
+  function markDirtyUI() {
+    const btn = document.getElementById("saveCloudBtn");
+    if (!btn) return;
+    const n = dirty.size;
+    btn.classList.toggle("dirty", n > 0);
+    btn.textContent = n > 0 ? "保存更改到云端 · 有未保存更改" : "保存更改到云端";
+  }
+
+  /* 手动推送（唯一同步入口，由「保存更改到云端」按钮触发）。
+     失败的版本进入 failed 隔离，本轮不再重试，保留脏标记等待下次手动保存。 */
+  async function flush() {
+    if (pushing) return pushing;                 // 串行：在途推送未结束时复用同一 Promise
     pushing = (async () => {
       const failed = new Set();
       try {
@@ -120,17 +129,12 @@ RS.store = (function () {
           }
         }
         await RS.api.putState({ order: state.order, currentId: state.currentId });
-        failStreak = 0;
       } catch (e) {
-        failStreak++;
         if (e && e.status === 401) RS.auth.sessionExpired();
-        else console.error("保存到云端失败：", e);
+        else { console.error("保存到云端失败：", e); alert("保存到云端失败：" + (e && e.message ? e.message : e)); }
       } finally {
         pushing = null;
-        if (dirty.size) {
-          const delay = failed.size ? Math.min(15000, 1000 * Math.pow(2, failStreak)) : 300;
-          saveTimer = setTimeout(flush, delay);  // 推送期间的新改动快速接力；失败则退避重试
-        }
+        markDirtyUI();
       }
     })();
     return pushing;
@@ -164,22 +168,8 @@ RS.store = (function () {
     }
   }
 
-  /* 页面隐藏/关闭时兜底：用 keepalive 请求把未推送的脏版本发出去，防关闭丢失 */
-  function flushOnLeave() {
-    if (!dirty.size) return;
-    clearTimeout(saveTimer); saveTimer = null;
-    const ids = [...dirty]; dirty.clear();
-    ids.forEach(id => {
-      if (!state.versions[id]) return;
-      syncVersion(id, { keepalive: true }).catch(() => dirty.add(id));
-    });
-    RS.api.putState({ order: state.order, currentId: state.currentId }, { keepalive: true }).catch(() => {});
-  }
-  window.addEventListener("pagehide", flushOnLeave);
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") flushOnLeave();
-  });
-  /* 仍有未推送数据时阻止直接关闭页面，给用户一个等待/取消的机会 */
+  /* 未保存数据时阻止直接关闭页面，提醒用户先点击「保存更改到云端」。
+     注意：不做任何自动推送——同步只由用户手动触发。 */
   window.addEventListener("beforeunload", e => {
     if (dirty.size) { e.preventDefault(); e.returnValue = ""; }
   });
@@ -200,7 +190,7 @@ RS.store = (function () {
   }
 
   return {
-    init, get, cur, save, flush, findSec, findItem,
+    init, get, cur, save, flush, dirtyCount, findSec, findItem,
     userEmail, isAdmin, enterCloud, leaveCloud, newVersion, deleteVersion
   };
 })();

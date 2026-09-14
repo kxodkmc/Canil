@@ -305,7 +305,7 @@ RS.apps = (function () {
   }
 
   function open() { tab = "cur"; companyFilter = ""; render(); maskEl.classList.add("open"); }
-  function close() { maskEl.classList.remove("open"); RS.store.flush(); renderStrip(); }
+  function close() { maskEl.classList.remove("open"); renderStrip(); }
 
   /* 总览中点版本节点：切换到该版本并回到本版投递视图 */
   function goVersion(vid) {

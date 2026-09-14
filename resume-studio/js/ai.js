@@ -195,7 +195,7 @@ RS.ai = (function () {
     return { errors, warnings, data: { profile: { name, photo, fields }, sections } };
   }
 
-  /* ---------- 导入：校验通过才新建版本并切换；当前编辑的版本已在本地自动保存，绝不被修改 ---------- */
+  /* ---------- 导入：校验通过才新建版本并切换；只改内存状态，不触碰当前编辑的版本 ---------- */
   async function importHTMLText(text, onError) {
     const r = parseResumeHTML(String(text || ""));
     if (r.errors.length) {

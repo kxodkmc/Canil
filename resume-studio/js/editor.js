@@ -86,10 +86,17 @@ RS.editor = (function () {
     });
 
     h += '<button class="add-btn" data-action="add-section">+ 添加新模块（如：荣誉奖项 / 自我评价）</button>'
-      +  '<div class="ed-footer-tip">提示：<b>直接点击右侧简历上的文字即可修改</b>，所见即所得；<br>拖动 ⋮⋮ 手柄调整模块与条目次序；所有修改自动保存在本机浏览器中。</div>';
+      +  '<div class="ed-footer-tip">提示：<b>直接点击右侧简历上的文字即可修改</b>，所见即所得；<br>拖动 ⋮⋮ 手柄调整模块与条目次序；改动需点击顶部「保存更改到云端」才会同步。</div>';
 
     editorEl.innerHTML = h;
     growAll();
+  }
+
+  /* 预览重绘代价高（整棵 DOM + 照片），输入时合并到 150ms 内最多一次 */
+  let previewTimer;
+  function schedulePreviewRender() {
+    clearTimeout(previewTimer);
+    previewTimer = setTimeout(() => RS.preview.render(), 150);
   }
 
   /* ---------- 输入：写回数据，不重建编辑器（避免丢焦点） ---------- */
@@ -110,7 +117,7 @@ RS.editor = (function () {
     }
     RS.store.save();
     if (t.tagName === "TEXTAREA") growTa(t);
-    RS.preview.render();
+    schedulePreviewRender();
   }
 
   /* ---------- 按钮 ---------- */
@@ -206,9 +213,11 @@ RS.editor = (function () {
     e.preventDefault();
     const r = target.getBoundingClientRect();
     const before = (e.clientY - r.top) < r.height / 2;
-    target.classList.toggle("drag-over-top", before);
-    target.classList.toggle("drag-over-bottom", !before);
-    target._dropBefore = before;
+    if (target._dropBefore !== before) {                      // 状态不变不抖动 class，减少高频重排
+      target._dropBefore = before;
+      target.classList.toggle("drag-over-top", before);
+      target.classList.toggle("drag-over-bottom", !before);
+    }
   }
   function onDragLeave(e) {
     const t = e.target.closest(".drag-over-top,.drag-over-bottom");
@@ -216,25 +225,32 @@ RS.editor = (function () {
   }
   function onDrop(e) {
     if (!dragCtx) return;
-    const isItem = dragCtx.type === "item";
+    const ctx = dragCtx;                        // 事件序列内可能还会读，先取出再清
+    dragCtx = null;
+    const isItem = ctx.type === "item";
     const target = e.target.closest(isItem ? ".ed-item" : ".ed-card[data-kind=section]");
     e.preventDefault();
     editorEl.querySelectorAll(".drag-over-top,.drag-over-bottom")
-      .forEach(x => x.classList.remove("drag-over-top", "drag-over-bottom"));
+      .forEach(x => { x.classList.remove("drag-over-top", "drag-over-bottom"); x._dropBefore = undefined; });
     if (target) {
-      const arr = isItem ? RS.store.findSec(dragCtx.sid).items : RS.store.cur().data.sections;
-      const fromId = dragCtx.id;
       const toId = isItem ? target.dataset.iid : target.dataset.sid;
+      /* 与 dragover 同一守卫：条目不允许跨模块、也不接受任何未通过校验的目标 */
+      if (isItem && target.dataset.sid !== ctx.sid) return;
+      const arr = isItem ? RS.store.findSec(ctx.sid).items : RS.store.cur().data.sections;
+      const fromId = ctx.id;
       if (fromId !== toId) {
         const from = arr.findIndex(x => x.id === fromId);
+        if (from < 0) return;                   // 找不到来源（陈旧拖拽）绝不盲删
         const [moved] = arr.splice(from, 1);
         let to = arr.findIndex(x => x.id === toId);
         if (!target._dropBefore) to += 1;
         arr.splice(to, 0, moved);
-        RS.store.save(); render(); RS.preview.render();
+        RS.store.save();
+        /* 关键：拖拽事件序列期间绝不重建 DOM（拖拽源若在 dragend 前被移除，
+           浏览器拖拽状态无法收尾，整个页面会假死）。延迟到下一轮宏任务再重绘。 */
+        setTimeout(() => { render(); RS.preview.render(); }, 0);
       }
     }
-    dragCtx = null;
   }
 
   /* 预览区改过后，聚焦时同步最新值（不整棵重建，不打断操作） */
@@ -259,7 +275,11 @@ RS.editor = (function () {
     editorEl.addEventListener("dragover", onDragOver);
     editorEl.addEventListener("dragleave", onDragLeave);
     editorEl.addEventListener("drop", onDrop);
-    editorEl.addEventListener("dragend", () => { dragCtx = null; });
+    editorEl.addEventListener("dragend", () => {
+      dragCtx = null;   // 兜底：拖拽被取消（drop 未触发）时清掉高亮，避免残留状态
+      editorEl.querySelectorAll(".drag-over-top,.drag-over-bottom")
+        .forEach(x => { x.classList.remove("drag-over-top", "drag-over-bottom"); x._dropBefore = undefined; });
+    });
   }
 
   return { render, init };
