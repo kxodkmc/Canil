@@ -12,11 +12,13 @@ RS.stylePanel = (function () {
     ["stPad",  "pad", "stPadV", v => v + "mm"]
   ];
 
-  /* 两套模板各自的默认主题色/页边距：切换时若当前值是另一套的默认，则成对互换 */
+  /* 各模板的默认主题色/页边距：切换时若当前值是另一套的默认，则成对互换 */
   const TPL_DEF = {
     classic: { color: "#2b4c7e", pad: 12 },
-    banner:  { color: "#2272b8", pad: 9 }
+    banner:  { color: "#2272b8", pad: 9 },
+    minimal: { color: "#2b4c7e", pad: 12 }
   };
+  const TPL_KEYS = Object.keys(TPL_DEF);
 
   function sync() {
     const st = RS.store.cur().style;
@@ -60,11 +62,14 @@ RS.stylePanel = (function () {
     });
     $("stTpl").addEventListener("change", e => {
       const st = RS.store.cur().style;
-      const next = e.target.value === "banner" ? "banner" : "classic";
-      const other = next === "banner" ? "classic" : "banner";
-      /* 主题色/页边距仍是对方默认值时，自动换成新模板的默认，保证开箱即像素级还原 */
-      if ((st.color || "").toLowerCase() === TPL_DEF[other].color) { st.color = TPL_DEF[next].color; $("stColor").value = st.color; }
-      if (st.pad === TPL_DEF[other].pad) { st.pad = TPL_DEF[next].pad; $("stPad").value = st.pad; $("stPadV").textContent = st.pad + "mm"; }
+      const next = TPL_KEYS.includes(e.target.value) ? e.target.value : "classic";
+      /* 主题色/页边距仍是其他模板的默认值时，自动换成新模板的默认，保证开箱即像素级还原 */
+      if (TPL_KEYS.some(t => t !== next && (TPL_DEF[t].color || "").toLowerCase() === (st.color || "").toLowerCase())) {
+        st.color = TPL_DEF[next].color; $("stColor").value = st.color;
+      }
+      if (TPL_KEYS.some(t => t !== next && st.pad === TPL_DEF[t].pad)) {
+        st.pad = TPL_DEF[next].pad; $("stPad").value = st.pad; $("stPadV").textContent = st.pad + "mm";
+      }
       st.template = next;
       RS.store.save(); RS.preview.render(); RS.stylePanel.sync();
     });

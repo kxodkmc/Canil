@@ -83,9 +83,12 @@ RS.preview = (function () {
   function render() {
     const d = RS.store.cur().data, st = RS.store.cur().style;
 
-    /* 模板：banner=商务蓝横幅（t2 类驱动 resume-t2.css）；classic 走默认样式 */
+    /* 模板：banner=商务蓝横幅（t2 类驱动 resume-t2.css）；minimal=极简留白（t3）；
+       classic 走默认样式 */
     const isT2 = st.template === "banner";
+    const isT3 = st.template === "minimal";
     resumeEl.classList.toggle("t2", isT2);
+    resumeEl.classList.toggle("t3", isT3);
 
     /* 排版变量 */
     resumeEl.style.setProperty("--rs-font", st.font + "px");

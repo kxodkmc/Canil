@@ -1,0 +1,36 @@
+/* ============================================================
+   极简留白模板（第三套样式）
+   仅当 #resume 根节点带 t3 类时生效，与经典(resume.css)/商务蓝(t2)完全隔离。
+   风格：无图标、无分隔线、无主题色——纯黑白灰；
+   模块标题加大加粗，条目行 日期居左 / 公司居中 / 职位居右 且统一深色加粗。
+   ============================================================ */
+
+#resume.t3{color:#222}
+
+/* ---- 模块标题：去掉图标与横线，黑色大标题 + 更大留白 ---- */
+#resume.t3 .rs-ico,
+#resume.t3 .rs-rule{display:none}
+#resume.t3 .rs-sec-head{
+  justify-content:flex-start;gap:0;
+  margin-bottom:calc(var(--rs-item-gap,7px) + 3px);
+}
+#resume.t3 .rs-sec-head .rs-title{
+  color:#111;font-size:1.32em;letter-spacing:1px;
+}
+
+/* ---- 条目行：整行深色加粗，公司名居中 ---- */
+#resume.t3 .rs-item-line{color:#111}
+#resume.t3 .rs-item-line .t{text-align:center}
+#resume.t3 .rs-item-line .d{font-weight:700}
+
+/* ---- 正文元素：全部去色 ---- */
+#resume.t3 .rs-desc{color:#222}
+#resume.t3 .rs-link{color:#111}
+#resume.t3 .rs-grid .cell .lb{color:#222}
+#resume.t3 .rs-bullets li::before{color:#222}
+
+/* ---- 照片与资料区：去彩色描边 ---- */
+#resume.t3 .rs-photo{border-color:#d8d8d8;background:#f7f7f7}
+
+/* ---- 编辑态焦点色随模板置灰 ---- */
+#resume.t3 [contenteditable]:focus{outline-color:#999;background:#f6f6f6}

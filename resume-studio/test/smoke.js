@@ -234,6 +234,17 @@ const tick = () => new Promise(r => setTimeout(r, 0));
   ok("切回经典：t2 类移除、标题条消失", !d.getElementById("resume").classList.contains("t2") && !d.querySelector("#resume .t2-profile-head"));
   ok("经典默认色/边距换回", w.RS.store.cur().style.color === "#2b4c7e" && w.RS.store.cur().style.pad === 12);
 
+  tpl.value = "minimal";
+  tpl.dispatchEvent(new w.Event("change", { bubbles: true }));
+  ok("切换极简留白：根节点带 t3 类且无 t2", d.getElementById("resume").classList.contains("t3") && !d.getElementById("resume").classList.contains("t2"));
+  ok("极简留白：图标与分隔线隐藏", w.getComputedStyle(d.querySelector("#resume .rs-sec-head .rs-ico")).display === "none" && w.getComputedStyle(d.querySelector("#resume .rs-sec-head .rs-rule")).display === "none");
+  tpl.value = "banner";
+  tpl.dispatchEvent(new w.Event("change", { bubbles: true }));
+  ok("极简→商务蓝：t3 移除、t2 生效", d.getElementById("resume").classList.contains("t2") && !d.getElementById("resume").classList.contains("t3"));
+  tpl.value = "classic";
+  tpl.dispatchEvent(new w.Event("change", { bubbles: true }));
+  ok("切回经典收尾", !d.getElementById("resume").classList.contains("t3"));
+
   console.log("== 工具栏其余动作 ==");
   d.querySelector('[data-action="toggle-editor"]').click();
   ok("编辑面板可收起", d.getElementById("editor").style.display === "none");
