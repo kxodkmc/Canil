@@ -44,9 +44,62 @@ RS.io = (function () {
     e.target.value = "";
   }
 
+  /* 纯文本复制：把当前版本简历整理为易粘贴的纯文本（剥离 b/i/u 行内标签） */
+  function buildPlainText() {
+    const d = RS.store.cur().data;
+    const strip = s => String(s || "").replace(/<\/?(b|i|u)>/g, "");
+    const lines = [];
+    if ((d.profile.name || "").trim()) lines.push(strip(d.profile.name).trim());
+    d.profile.fields.forEach(f => {
+      const v = strip(f.value).trim();
+      if (v) lines.push(strip(f.label).trim() + "：" + v);
+    });
+    d.sections.filter(s => s.visible).forEach(sec => {
+      const secLines = [];
+      sec.items.forEach(it => {
+        const head = [strip(it.date), strip(it.title), strip(it.role)].map(x => x.trim()).filter(Boolean).join("　");
+        if (head) secLines.push(head);
+        const link = strip(it.link).trim();
+        if (link) secLines.push(link);
+        const desc = strip(it.desc).trim();
+        if (desc) secLines.push(desc);
+        it.bullets.map(strip).map(b => b.trim()).filter(Boolean).forEach(b => secLines.push("· " + b));
+      });
+      if (secLines.length) {
+        if (lines.length) lines.push("");
+        lines.push("【" + strip(sec.title).trim() + "】");
+        lines.push(...secLines);
+      }
+    });
+    return lines.join("\n");
+  }
+
+  async function copyText(btn) {
+    const text = buildPlainText();
+    if (!text.trim()) return alert("当前简历没有可复制的内容。");
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (_) {
+      /* 非安全上下文等场景的兜底：临时文本域 + execCommand */
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.cssText = "position:fixed;opacity:0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+    }
+    if (btn) {
+      const orig = btn.textContent;
+      btn.textContent = "已复制 ✓";
+      btn.disabled = true;
+      setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1200);
+    }
+  }
+
   function init() {
     RS.util.$("importFile").addEventListener("change", onImportFile);
   }
 
-  return { exportJSON, init };
+  return { exportJSON, copyText, buildPlainText, init };
 })();

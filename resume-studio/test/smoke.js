@@ -146,6 +146,11 @@ const tick = () => new Promise(r => setTimeout(r, 0));
   w.RS.preview.render();
   ok("重渲染后加粗可见", !!d.querySelector("#resume .rs-bullets li b"));
 
+  console.log("== 复制文本 ==");
+  const plain = w.RS.io.buildPlainText();
+  ok("纯文本含姓名与模块标题", plain.includes("张三") && plain.includes("【教育经历改】"));
+  ok("纯文本剥离行内标签", plain.includes("前半加粗词后半") && !plain.includes("<b>"));
+
   console.log("== 版本操作 ==");
   await w.RS.versions.actions("save-as");
   ok("另存为版本", w.RS.store.get().order.length === 2 && w.RS.store.cur().name === "测试副本");

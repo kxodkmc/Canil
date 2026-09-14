@@ -23,6 +23,7 @@ RS.toolbar = (function () {
     if (act === "toggle-editor") toggleEditor(btn);
     if (act === "open-apps") RS.apps.open();
     if (act === "save-cloud") RS.store.flush();
+    if (act === "copy-text") RS.io.copyText(btn);
     if (act === "export-json") RS.io.exportJSON();
     if (act === "import-json") $("importFile").click();
     if (act === "copy-prompt") RS.ai.copyPrompt();
